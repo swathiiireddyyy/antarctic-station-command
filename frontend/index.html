@@ -1,0 +1,2780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Antarctic Station Command</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230277a8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='12' y1='2' x2='12' y2='22'/%3E%3Cline x1='2' y1='12' x2='22' y2='12'/%3E%3Cline x1='4.93' y1='4.93' x2='19.07' y2='19.07'/%3E%3Cline x1='19.07' y1='4.93' x2='4.93' y2='19.07'/%3E%3Ccircle cx='12' cy='12' r='2.5' fill='%230277a8'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#c8e8f8;--surface:#dff2fc;--card:rgba(240,249,255,.90);--card2:rgba(232,245,254,.92);
+  --border:#90cce8;--border2:#5bb4da;--cyan:#0277a8;--blue:#0369a1;
+  --green:#059669;--yellow:#d97706;--orange:#c2410c;--red:#dc2626;--purple:#6d28d9;
+  --text:#0c1f35;--muted:#234e6e;--dim:#3b779c;
+  --radius:10px;--shadow:0 2px 12px rgba(2,119,168,.10);
+  --shadow-md:0 4px 20px rgba(2,119,168,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;color:var(--text);background:var(--bg);overflow-x:hidden}
+body{background:radial-gradient(ellipse 80% 60% at 20% 10%,rgba(56,189,248,.22),transparent),
+  radial-gradient(ellipse 60% 50% at 80% 80%,rgba(14,165,233,.18),transparent),
+  radial-gradient(ellipse 50% 40% at 50% 50%,rgba(186,230,253,.25),transparent),
+  linear-gradient(160deg,#b3ddf5 0%,#c8e8f8 40%,#d8f0fc 100%);overflow:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle 120px at 10% 20%,rgba(255,255,255,.18),transparent),
+  radial-gradient(circle 80px at 90% 30%,rgba(255,255,255,.15),transparent),
+  radial-gradient(circle 60px at 50% 70%,rgba(255,255,255,.12),transparent);pointer-events:none;z-index:0}
+#app{display:flex;min-height:100vh;position:relative;z-index:1;max-width:100vw;overflow-x:hidden}
+a,button{cursor:pointer;font-family:inherit}
+svg{display:inline-block;vertical-align:middle;flex-shrink:0}
+/* layout */
+#sidebar{width:220px;min-height:100vh;background:rgba(200,235,252,.88);backdrop-filter:blur(10px);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width .2s,transform .2s;flex-shrink:0;z-index:10}
+#sidebar.collapsed{width:56px}
+#main{flex:1;display:flex;flex-direction:column;min-height:100vh;overflow-x:hidden;max-width:100vw}
+#topbar{display:flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(220,244,254,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);min-height:52px;flex-shrink:0}
+.page{padding:20px 22px;animation:pageFade 160ms cubic-bezier(0.16,1,0.3,1);overflow-y:auto;flex:1;max-height:calc(100vh - 52px - 32px)}
+@keyframes pageFade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+/* sidebar nav */
+.nav-logo{display:flex;align-items:center;gap:10px;padding:14px 12px 10px;border-bottom:1px solid var(--border)}
+.nav-logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--cyan),var(--blue));border-radius:9px;display:grid;place-items:center;flex-shrink:0;color:#fff;box-shadow:0 2px 8px rgba(2,119,168,.25)}
+nav{flex:1;overflow-y:auto;padding:6px 0}
+.ns{font-size:.74rem;font-weight:700;color:var(--dim);padding:10px 14px 4px;text-transform:uppercase;letter-spacing:.08em;overflow:hidden;white-space:nowrap}
+.ni{display:flex;align-items:center;gap:8px;padding:9px 14px;width:100%;background:none;border:none;color:var(--muted);font-size:.88rem;font-weight:600;text-align:left;border-radius:0;transition:background .15s,color .15s,padding-left .15s;white-space:nowrap;overflow:hidden;position:relative}
+.ni:hover{background:rgba(2,119,168,.12);color:var(--cyan);padding-left:17px}
+.ni.act{background:rgba(2,119,168,.16);color:var(--cyan);font-weight:700;border-left:3px solid var(--cyan)}
+.ni .ico{width:18px;height:18px;flex-shrink:0;color:inherit}
+.ni .lbl{flex:1;overflow:hidden;text-overflow:ellipsis}
+.nbadge{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--red);color:#fff;border-radius:50%;width:18px;height:18px;font-size:.65rem;font-weight:700;display:none;place-items:center;line-height:1}
+#sidebar.collapsed .lbl,#sidebar.collapsed .ns,#sidebar.collapsed #sb-lbl,#sidebar.collapsed .nbadge{display:none}
+#sidebar.collapsed .ni{padding:10px;justify-content:center}
+/* cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card-md{padding:16px}
+.card-sm{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow)}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s}
+.kpi:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.kpi-v{font-size:1.85rem;font-weight:800;color:var(--cyan);line-height:1.1}
+.kpi-l{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:4px;font-weight:700}
+.kpi-sub{font-size:.82rem;color:var(--dim);margin-top:3px}
+/* grids */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+/* tags */
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:9999px;font-size:.76rem;font-weight:700;letter-spacing:.02em}
+.tg{background:rgba(5,150,105,.15);color:#065f46;border:1px solid rgba(5,150,105,.35)}
+.ty{background:rgba(217,119,6,.15);color:#92400e;border:1px solid rgba(217,119,6,.35)}
+.tr{background:rgba(220,38,38,.15);color:#991b1b;border:1px solid rgba(220,38,38,.35)}
+.tb{background:rgba(2,119,168,.14);color:#0277a8;border:1px solid rgba(2,119,168,.3)}
+.tG{background:rgba(100,116,139,.14);color:#334155;border:1px solid rgba(100,116,139,.3)}
+.tp{background:rgba(109,40,217,.14);color:#5b21b6;border:1px solid rgba(109,40,217,.35)}
+/* typography & headings */
+.sec-hd{font-size:.95rem;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;display:inline-block}
+.dg{background:var(--green)}.dy{background:var(--yellow)}.dr{background:var(--red)}.db{background:var(--cyan)}
+/* inputs & controls */
+input,select,textarea{background:rgba(255,255,255,.85);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:.88rem;color:var(--text);font-family:inherit;outline:none;transition:border .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(2,119,168,.2)}
+/* buttons with clear hover & focus states */
+button{font-family:inherit}
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+button.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:none;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .15s ease}
+button.btn:hover{filter:brightness(1.06);box-shadow:0 2px 8px rgba(2,119,168,.2);transform:translateY(-1px)}
+button.btn:active{transform:scale(.97)}
+.btn-p{background:var(--cyan);color:#fff}.btn-p:hover{background:var(--blue)}
+.btn-g{background:rgba(5,150,105,.18);color:#065f46;border:1px solid rgba(5,150,105,.35)}.btn-g:hover{background:rgba(5,150,105,.28)}
+.btn-r{background:rgba(220,38,38,.16);color:#991b1b;border:1px solid rgba(220,38,38,.35)}.btn-r:hover{background:rgba(220,38,38,.26)}
+.btn-y{background:rgba(217,119,6,.16);color:#92400e;border:1px solid rgba(217,119,6,.35)}.btn-y:hover{background:rgba(217,119,6,.26)}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--muted)}.btn-ghost:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(2,119,168,.06)}
+/* responsive canvas charts */
+canvas.chart-cv, .card canvas.chart-cv{width:100% !important;display:block;box-sizing:border-box}
+/* progress bar */
+.prog{height:7px;background:rgba(2,119,168,.14);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;border-radius:4px;transition:width .5s ease}
+/* table */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tbl{width:100%;border-collapse:collapse;font-size:.88rem}
+.tbl th{text-align:left;padding:9px 12px;font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)}
+.tbl td{padding:9px 12px;border-bottom:1px solid rgba(144,204,232,.45);vertical-align:middle}
+.tbl tr:hover td{background:rgba(2,119,168,.05)}
+/* tabs */
+.tabs{display:flex;gap:4px;padding:4px;background:rgba(2,119,168,.08);border-radius:10px;margin-bottom:14px}
+.tab{flex:1;padding:8px 12px;border:none;border-radius:7px;background:none;font-size:.84rem;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s}
+.tab:hover{color:var(--cyan);background:rgba(255,255,255,.4)}
+.tab.act{background:var(--card);color:var(--cyan);box-shadow:var(--shadow);font-weight:700}
+/* alerts */
+.al-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;border-left:4px solid transparent;display:flex;gap:10px;align-items:flex-start}
+.al-card.critical{border-left-color:var(--red)}
+.al-card.warning{border-left-color:var(--yellow)}
+.al-card.info{border-left-color:var(--cyan)}
+/* toasts */
+#toasts{position:fixed;top:14px;right:14px;z-index:2000;display:flex;flex-direction:column;gap:6px;max-width:340px}
+.toast{padding:11px 16px;border-radius:10px;font-size:.85rem;box-shadow:var(--shadow-md);animation:pageFade .2s;transition:opacity .3s;backdrop-filter:blur(8px);font-weight:500}
+.tst-r{background:rgba(254,242,242,.96);border:1px solid rgba(220,38,38,.35);color:#991b1b}
+.tst-y{background:rgba(255,251,235,.96);border:1px solid rgba(217,119,6,.35);color:#92400e}
+.tst-g{background:rgba(240,253,244,.96);border:1px solid rgba(5,150,105,.35);color:#065f46}
+.tst-b{background:rgba(240,249,255,.96);border:1px solid rgba(2,119,168,.35);color:#0277a8}
+/* connectivity banner */
+#conn-banner{display:none;align-items:center;gap:8px;padding:8px 16px;font-size:.84rem;border-bottom:1px solid;flex-shrink:0;font-weight:500}
+/* skeleton loading */
+.skel{background:linear-gradient(90deg,rgba(2,119,168,.08) 25%,rgba(2,119,168,.16) 50%,rgba(2,119,168,.08) 75%);background-size:300% 100%;animation:sk 1.2s ease infinite;border-radius:6px;height:18px}
+@keyframes sk{0%{background-position:100%}100%{background-position:-100%}}
+/* lock badge */
+.locked{opacity:.45;pointer-events:none;position:relative}
+.lock-note{font-size:.72rem;color:var(--muted);font-style:italic}
+/* conn status pill */
+.conn-pill{display:flex;align-items:center;gap:6px;padding:4px 11px;border-radius:9999px;font-size:.76rem;font-weight:700}
+.conn-online{background:rgba(5,150,105,.14);border:1px solid rgba(5,150,105,.35);color:#065f46}
+.conn-degraded{background:rgba(217,119,6,.14);border:1px solid rgba(217,119,6,.35);color:#92400e}
+.conn-offline{background:rgba(220,38,38,.14);border:1px solid rgba(220,38,38,.35);color:#991b1b}
+.conn-syncing{background:rgba(2,119,168,.14);border:1px solid rgba(2,119,168,.35);color:#0277a8}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.3}}
+.footer-bar{padding:8px 22px;border-top:1px solid var(--border);color:var(--dim);font-size:.76rem;display:flex;justify-content:space-between;flex-shrink:0;background:rgba(220,244,254,.6)}
+/* resupply */
+.rsup-ok{background:rgba(5,150,105,.08);border:1px solid rgba(5,150,105,.3);border-radius:8px;padding:10px 12px;margin-bottom:6px}
+.rsup-warn{background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.3);border-radius:8px;padding:10px 12px;margin-bottom:6px}
+.rsup-crit{background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.3);border-radius:8px;padding:10px 12px;margin-bottom:6px}
+/* station switcher */
+.stn-sw{display:flex;gap:4px;margin:8px 10px;background:rgba(2,119,168,.1);border-radius:8px;padding:3px}
+.stn-btn{flex:1;padding:5px 8px;border:none;border-radius:6px;font-size:.76rem;font-weight:700;cursor:pointer;color:var(--muted);background:none;transition:all .15s}
+.stn-btn:hover{color:var(--cyan);background:rgba(255,255,255,.5)}
+.stn-btn.act{background:var(--card);color:var(--cyan);box-shadow:var(--shadow)}
+/* isometric twin */
+#twin-canvas{cursor:pointer;border-radius:var(--radius);width:100%;max-width:100%;display:block}
+.twin-info{position:absolute;pointer-events:none;background:rgba(240,249,255,.96);border:1px solid var(--border);border-radius:10px;padding:11px 14px;font-size:.84rem;box-shadow:var(--shadow-md);min-width:200px;max-width:260px;backdrop-filter:blur(8px);z-index:20}
+/* responsive breakpoints */
+#sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(12,31,53,.4);backdrop-filter:blur(2px);z-index:99}
+@media (max-width:1024px){
+  .g4{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:768px){
+  #sidebar{position:fixed;top:0;bottom:0;left:0;z-index:100;box-shadow:4px 0 24px rgba(2,119,168,.25);transform:translateX(0)}
+  #sidebar.collapsed{transform:translateX(-100%);width:220px}
+  #sidebar-overlay.active{display:block}
+  .g4,.g3,.g2{grid-template-columns:1fr}
+  .page{padding:14px 12px}
+  #topbar{padding:8px 10px}
+}
+</style>
+</head>
+<body>
+<div id="sidebar-overlay" onclick="toggleSB()"></div>
+<div id="toasts"></div>
+<div id="app"></div>
+<canvas id="icebg" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:.5"></canvas>
+<script>
+(function(){
+  const c=document.getElementById('icebg');
+  const resize=()=>{c.width=innerWidth;c.height=innerHeight};
+  resize();window.addEventListener('resize',resize);
+  const ctx=c.getContext('2d');
+  const flakes=Array.from({length:50},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*2.5+.8,spd:Math.random()*.5+.3,drift:(Math.random()-.5)*.35,op:Math.random()*.5+.2}));
+  function drawMtns(){
+    ctx.beginPath();ctx.moveTo(0,c.height);ctx.lineTo(0,c.height*.78);ctx.lineTo(c.width*.08,c.height*.7);ctx.lineTo(c.width*.18,c.height*.58);ctx.lineTo(c.width*.28,c.height*.65);ctx.lineTo(c.width*.36,c.height*.48);ctx.lineTo(c.width*.44,c.height*.62);ctx.lineTo(c.width*.52,c.height*.42);ctx.lineTo(c.width*.6,c.height*.56);ctx.lineTo(c.width*.68,c.height*.38);ctx.lineTo(c.width*.74,c.height*.5);ctx.lineTo(c.width*.82,c.height*.44);ctx.lineTo(c.width*.9,c.height*.6);ctx.lineTo(c.width,c.height*.7);ctx.lineTo(c.width,c.height);ctx.closePath();
+    const gm=ctx.createLinearGradient(0,c.height*.4,0,c.height);gm.addColorStop(0,'rgba(255,255,255,.5)');gm.addColorStop(.4,'rgba(200,235,255,.4)');gm.addColorStop(1,'rgba(170,215,240,.25)');ctx.fillStyle=gm;ctx.fill();
+    ctx.beginPath();ctx.moveTo(0,c.height);ctx.lineTo(0,c.height*.88);ctx.lineTo(c.width*.12,c.height*.82);ctx.lineTo(c.width*.22,c.height*.75);ctx.lineTo(c.width*.3,c.height*.8);ctx.lineTo(c.width*.42,c.height*.72);ctx.lineTo(c.width*.55,c.height*.78);ctx.lineTo(c.width*.66,c.height*.69);ctx.lineTo(c.width*.78,c.height*.76);ctx.lineTo(c.width*.88,c.height*.7);ctx.lineTo(c.width,c.height*.8);ctx.lineTo(c.width,c.height);ctx.closePath();
+    const gf=ctx.createLinearGradient(0,c.height*.7,0,c.height);gf.addColorStop(0,'rgba(210,240,255,.6)');gf.addColorStop(1,'rgba(185,225,248,.35)');ctx.fillStyle=gf;ctx.fill();
+  }
+  function tick(){ctx.clearRect(0,0,c.width,c.height);drawMtns();for(const f of flakes){ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,6.28);ctx.fillStyle=`rgba(255,255,255,${f.op})`;ctx.fill();f.y+=f.spd;f.x+=f.drift;if(f.y>c.height+4){f.y=-4;f.x=Math.random()*c.width}if(f.x<0)f.x=c.width;if(f.x>c.width)f.x=0;}requestAnimationFrame(tick);}
+  tick();
+})();
+</script>
+<script>
+'use strict';
+// ═══════════════════════ ANTARCTIC STATION COMMAND v3.0 ═══════════════════════
+// Indian Antarctic Program | Dual-Station Remote Management Platform
+
+/* ── SVG ICON LIBRARY ───────────────────────────────────────────── */
+const ICO={
+  dashboard:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>`,
+  bolt:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+  package:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>`,
+  wrench:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`,
+  globe:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
+  users:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  bell:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`,
+  siren:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+  mountain:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 20 15 4 21 20"/><polyline points="3 20 9 12 14 16"/></svg>`,
+  flask:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><line x1="8.5" y1="2" x2="15.5" y2="2"/></svg>`,
+  chart:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
+  document:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`,
+  book:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
+  cog:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+  satellite:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 12 7 12 9 8 12 16 15 10 17 12 22 12"/><path d="M4.93 4.93l4.24 4.24"/><path d="M14.83 9.17l4.24 4.24"/><path d="M4.93 19.07l4.24-4.24"/><path d="M19.07 4.93l-4.24 4.24"/></svg>`,
+  building:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="9" width="7" height="12"/><rect x="9" y="13" width="5" height="8"/></svg>`,
+  wifi:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>`,
+  wifioff:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a11 11 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.56 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>`,
+  refresh:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>`,
+  lock:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+  check:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+  xcircle:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+  menu:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`,
+  logout:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+  alert:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+  ship:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1 .6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.94 5.34 2.81 7.76"/><path d="M19 13V7a1 1 0 0 0-1-1H6a1 1 0 0 0-1 1v6"/><path d="M12 10v4"/><path d="M12 2v3"/></svg>`,
+  eye:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
+  eyeoff:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`,
+  search:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+  plus:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+  map:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>`,
+  thermometer:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>`,
+  droplet:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>`,
+  wind:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/></svg>`,
+  activity:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+  chevron:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>`,
+  snow:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/><line x1="19.07" y1="4.93" x2="4.93" y2="19.07"/><circle cx="12" cy="12" r="2.5"/></svg>`,
+  download:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+};
+function ic(name,sz=16,cls=''){
+  return `<span style="display:inline-flex;align-items:center;width:${sz}px;height:${sz}px;color:inherit" class="${cls}">${ICO[name]||''}</span>`;
+}
+
+/* ── ROLES ───────────────────────────────────────────────── */
+const ROLES={admin:{label:'Station Administrator',color:'#8b5cf6'},engineer:{label:'Engineer',color:'#06b6d4'},scientist:{label:'Scientist/Researcher',color:'#10b981'},medical:{label:'Medical/Safety Officer',color:'#f59e0b'},operator:{label:'Operator',color:'#0ea5e9'}};
+const PERMISSIONS={admin:['all'],engineer:['equipment.edit','workorder.create','workorder.close','energy.setpoint','alert.ack','logbook.any'],scientist:['logbook.science','alert.view'],medical:['personnel.status','logbook.safety','logbook.medical','alert.ack'],operator:['alert.ack','inventory.update','logbook.shift']};
+function canDo(action){if(!APP.user)return false;const p=PERMISSIONS[APP.user.role]||[];return p.includes('all')||p.includes(action);}
+function gated(action,html,tip){if(canDo(action))return html;return `<span class="locked" title="Requires: ${ROLES[action.split('.')[0]]?.label||'higher access'}">${html.replace(/onclick="[^"]*"/g,'')}</span><div class="lock-note">${ic('lock',11)} ${tip||'Access restricted'}</div>`;}
+
+/* ── DEMO USERS ──────────────────────────────────────────── */
+const DEMO_USERS=[
+  {id:'u1',name:'Dr. Arun Sharma',  email:'admin@station.gov.in',  pw:'Admin@2026',role:'admin'},
+  {id:'u2',name:'Eng. Priya Mehta', email:'engineer@station.gov.in',pw:'Eng@2026',  role:'engineer'},
+  {id:'u3',name:'Dr. Kabir Nair',   email:'scientist@station.gov.in',pw:'Sci@2026', role:'scientist'},
+  {id:'u4',name:'Dr. Sunita Rao',   email:'medical@station.gov.in', pw:'Med@2026',  role:'medical'},
+  {id:'u5',name:'Op. Rajan Das',    email:'operator@station.gov.in',pw:'Op@2026',   role:'operator'},
+];
+
+/* ── SENSOR DEFINITIONS ──────────────────────────────────── */
+const SD={
+  temp_outdoor: {lbl:'Outdoor Temp', u:'°C', n:[-14,-8],mn:-50,mx:5,  d:.4, ico:'thermometer'},
+  temp_indoor:  {lbl:'Indoor Temp',  u:'°C', n:[18,24], mn:5,  mx:30, d:.2, ico:'thermometer'},
+  humidity:     {lbl:'Humidity',     u:'%',  n:[30,60], mn:10, mx:95, d:.5, ico:'droplet'},
+  wind_speed:   {lbl:'Wind Speed',   u:'km/h',n:[0,60], mn:0,  mx:200,d:3,  ico:'wind'},
+  pressure:     {lbl:'Pressure',     u:'hPa',n:[970,1020],mn:940,mx:1040,d:1,ico:'activity'},
+  co2:          {lbl:'CO\u2082',     u:'ppm',n:[300,600],mn:200,mx:1200,d:5,ico:'activity'},
+  air_quality:  {lbl:'Air Quality',  u:'AQI',n:[0,50],  mn:0,  mx:300,d:2,  ico:'wind'},
+  power_gen:    {lbl:'Power Gen',    u:'kW', n:[60,150], mn:0,  mx:200,d:2,  ico:'bolt'},
+  power_cons:   {lbl:'Consumption',  u:'kW', n:[50,130], mn:0,  mx:200,d:2,  ico:'bolt'},
+  solar_gen:    {lbl:'Solar',        u:'kW', n:[0,80],   mn:0,  mx:100,d:1.5,ico:'activity'},
+  wind_gen:     {lbl:'Wind Power',   u:'kW', n:[0,60],   mn:0,  mx:80, d:1.5,ico:'wind'},
+  diesel_gen:   {lbl:'Diesel Gen',   u:'kW', n:[20,80],  mn:0,  mx:120,d:1,  ico:'bolt'},
+  fuel_level:   {lbl:'Fuel Level',   u:'%',  n:[30,100], mn:0,  mx:100,d:.05,ico:'droplet'},
+  battery_pct:  {lbl:'Battery',      u:'%',  n:[40,100], mn:0,  mx:100,d:.1, ico:'activity'},
+  battery_temp: {lbl:'Battery Temp', u:'°C', n:[10,35],  mn:-5, mx:50, d:.2, ico:'thermometer'},
+  smoke_lab:    {lbl:'Smoke (Lab)',   u:'ppm',n:[0,10],   mn:0,  mx:100,d:.3, ico:'alert'},
+  co_level:     {lbl:'CO Level',     u:'ppm',n:[0,25],   mn:0,  mx:100,d:.2, ico:'alert'},
+  water_level:  {lbl:'Water Reserve',u:'%',  n:[40,100], mn:0,  mx:100,d:.05,ico:'droplet'},
+};
+
+/* ── STATION-SPECIFIC BASE VALUES ───────────────────────── */
+const BV_MAITRI={temp_outdoor:-12,temp_indoor:20,humidity:45,wind_speed:28,pressure:995,co2:420,air_quality:18,power_gen:95,power_cons:82,solar_gen:42,wind_gen:35,diesel_gen:18,fuel_level:68,battery_pct:74,battery_temp:22,smoke_lab:2,co_level:8,water_level:60};
+const BV_BHARATI={temp_outdoor:-17,temp_indoor:21,humidity:38,wind_speed:45,pressure:986,co2:395,air_quality:12,power_gen:72,power_cons:65,solar_gen:55,wind_gen:48,diesel_gen:10,fuel_level:44,battery_pct:82,battery_temp:19,smoke_lab:1,co_level:6,water_level:50};
+
+/* ── STATION DATA OBJECTS ────────────────────────────────── */
+const STATION_DATA={
+  maitri:{
+    id:'maitri',name:'Maitri',fullName:'Maitri Research Station',loc:'Queen Maud Land, E. Antarctica',lat:'70°46\'S',lon:'11°44\'E',est:1989,crew:8,
+    bv:BV_MAITRI,sensors:{},hist:{},
+    resupplyDate:'2027-01-15',resupplyShip:'MV Agulhas II',
+    equipment:[
+      {id:'eq1',name:'Diesel Generator #1',cat:'gen',  health:82,status:'online', hrs:14820,next:'2026-12-01',loc:'Power House',risk:0},
+      {id:'eq2',name:'Solar Array A',       cat:'solar',health:91,status:'online', hrs:8400, next:'2027-02-15',loc:'South Roof',  risk:0},
+      {id:'eq3',name:'Wind Turbine #1',     cat:'turb', health:76,status:'warning',hrs:11200,next:'2026-09-10',loc:'North Ridge', risk:0},
+      {id:'eq4',name:'Battery Bank A',      cat:'bat',  health:88,status:'online', hrs:7200, next:'2027-01-10',loc:'Power House', risk:0},
+      {id:'eq5',name:'HVAC — Main Bldg',    cat:'hvac', health:94,status:'online', hrs:6800, next:'2027-03-01',loc:'Main Bldg',   risk:0},
+      {id:'eq6',name:'Water Purifier',      cat:'pur',  health:79,status:'online', hrs:9600, next:'2026-11-30',loc:'Utility',     risk:0},
+      {id:'eq7',name:'Satellite Dish',      cat:'com',  health:97,status:'online', hrs:12000,next:'2027-04-01',loc:'Comms Tower', risk:0},
+      {id:'eq8',name:'Diesel Generator #2', cat:'gen',  health:65,status:'warning',hrs:22400,next:'2026-09-01',loc:'Power House', risk:0},
+      {id:'eq9',name:'Fire Suppression',    cat:'saf',  health:99,status:'online', hrs:1200, next:'2027-06-01',loc:'All Bldgs',   risk:0},
+      {id:'eq10',name:'Spectrometer',       cat:'sci',  health:88,status:'online', hrs:3400, next:'2027-05-15',loc:'Lab Block',   risk:0},
+    ],
+    personnel:[
+      {id:'p1',name:'Dr. Arun Sharma',  role:'admin',   loc:'inside', area:'Control Room',act:'Station Management',safe:true, wellness:{lastOutdoor:3, sunHrs:1.5,checkin:'Good'}},
+      {id:'p2',name:'Eng. Priya Mehta', role:'engineer',loc:'inside', area:'Power House',  act:'Generator Inspection',safe:true,wellness:{lastOutdoor:8, sunHrs:0.5,checkin:'Fair'}},
+      {id:'p3',name:'Dr. Kabir Nair',   role:'scientist',loc:'inside',area:'Lab Block',    act:'Atmospheric Study',safe:true,  wellness:{lastOutdoor:1, sunHrs:3.0,checkin:'Good'}},
+      {id:'p4',name:'Dr. Sunita Rao',   role:'medical', loc:'inside', area:'Medical Bay',  act:'Routine Check',safe:true,     wellness:{lastOutdoor:2, sunHrs:2.0,checkin:'Good'}},
+      {id:'p5',name:'Op. Rajan Das',    role:'operator',loc:'outside',area:'Solar Array',  act:'Panel Cleaning',safe:true,    wellness:{lastOutdoor:0, sunHrs:4.5,checkin:'Good'}},
+      {id:'p6',name:'Eng. Vikram Singh',role:'engineer',loc:'outside',area:'Wind Turbine', act:'Blade Inspection',safe:true,  wellness:{lastOutdoor:0, sunHrs:3.5,checkin:'Fair'}},
+      {id:'p7',name:'Dr. Meena Pillai', role:'scientist',loc:'inside',area:'Lab Block',    act:'Ice Core Analysis',safe:true,  wellness:{lastOutdoor:12,sunHrs:0.2,checkin:'Needs Attention'}},
+      {id:'p8',name:'Tech. Arjun Kumar',role:'operator',loc:'inside', area:'Utility Block',act:'Water Monitoring',safe:true,  wellness:{lastOutdoor:9, sunHrs:0.4,checkin:'Needs Attention'}},
+    ],
+    inventory:[
+      {id:'v1',n:'Diesel Fuel',      cat:'fuel',   qty:18500,max:30000,min:5000, u:'L',    rate:120, exp:null,        loc:'Fuel Storage'},
+      {id:'v2',n:'Drinking Water',   cat:'water',  qty:8200, max:12000,min:2000, u:'L',    rate:85,  exp:null,        loc:'Water Tank'},
+      {id:'v3',n:'Food Rations A',   cat:'food',   qty:420,  max:700,  min:60,   u:'packs',rate:8,   exp:'2025-12-31',loc:'Food Store'},
+      {id:'v4',n:'Food Rations B',   cat:'food',   qty:180,  max:400,  min:60,   u:'packs',rate:6,   exp:'2025-11-15',loc:'Food Store'},
+      {id:'v5',n:'Medical Oxygen',   cat:'medical',qty:24,   max:40,   min:10,   u:'cyl',  rate:.3,  exp:null,        loc:'Medical Bay'},
+      {id:'v6',n:'First Aid Kits',   cat:'medical',qty:15,   max:25,   min:5,    u:'kits', rate:.1,  exp:'2026-03-01',loc:'Medical Bay'},
+      {id:'v7',n:'Generator Spares', cat:'spares', qty:8,    max:15,   min:5,    u:'sets', rate:.05, exp:null,        loc:'Workshop'},
+      {id:'v8',n:'Solar Spares',     cat:'spares', qty:12,   max:20,   min:4,    u:'panels',rate:.02,exp:null,        loc:'Workshop'},
+      {id:'v9',n:'Filter Cartridges',cat:'cons',   qty:42,   max:60,   min:20,   u:'units',rate:2,   exp:null,        loc:'Utility'},
+      {id:'v10',n:'Emergency Flares',cat:'emerg',  qty:48,   max:80,   min:20,   u:'units',rate:.05, exp:'2026-06-01',loc:'Emergency Room'},
+    ],
+    workOrders:[
+      {id:'w1',title:'Generator #2 Full Service',pri:'critical',st:'in-progress',who:'Eng. Priya Mehta', eq:'eq8',due:'2025-10-30',note:'Replace fuel injectors'},
+      {id:'w2',title:'Wind Turbine Blade Check',  pri:'high',    st:'assigned',   who:'Eng. Vikram Singh',eq:'eq3',due:'2025-11-20',note:'Ice & fatigue cracks'},
+      {id:'w3',title:'Water Purifier Filter',     pri:'medium',  st:'open',       who:null,               eq:'eq6',due:'2025-11-30',note:'Monthly filter change'},
+      {id:'w4',title:'Battery Load Test',         pri:'medium',  st:'completed',  who:'Eng. Priya Mehta', eq:'eq4',due:'2025-10-20',note:'Quarterly test done'},
+      {id:'w5',title:'Solar Panel Cleaning',      pri:'low',     st:'completed',  who:'Op. Rajan Das',    eq:'eq2',due:'2025-10-25',note:'Snow/dust removal'},
+    ],
+    logbook:[
+      {id:'l1',ts:'2025-10-23T08:00:00Z',user:'Dr. Arun Sharma', cat:'shift',  txt:'Morning handover. All systems nominal. Wind 45 km/h overnight.'},
+      {id:'l2',ts:'2025-10-23T09:30:00Z',user:'Eng. Priya Mehta',cat:'maint',  txt:'Generator #2 service started. Worn injectors found.'},
+      {id:'l3',ts:'2025-10-23T11:15:00Z',user:'Dr. Kabir Nair',  cat:'science',txt:'Ozone readings taken. Slight depletion vs last month baseline.'},
+      {id:'l4',ts:'2025-10-23T14:00:00Z',user:'Dr. Sunita Rao',  cat:'safety', txt:'Monthly drill: all personnel accounted in 4min 22sec.'},
+      {id:'l5',ts:'2025-10-23T16:45:00Z',user:'Op. Rajan Das',   cat:'inv',    txt:'Diesel consumption higher than forecast. ~18 days to critical.'},
+    ],
+    alerts:[
+      {id:'al0',ts:new Date(Date.now()-2*60000).toISOString(),level:'warning',status:'active',title:'Generator #2 — Service Due',msg:'22,400h — approaching service interval. Risk: 42%.',loc:'Power House',action:'Schedule service within 7 days.'},
+      {id:'al1',ts:new Date(Date.now()-8*60000).toISOString(),level:'warning',status:'active',title:'Food Rations B — Expiring',msg:'Expires 2025-11-15. 23 days remaining.',loc:'Food Store',action:'Prioritize consumption.'},
+    ],
+    weather:{temp:-11.4,feels:-18.2,wind:38,wdir:'NNW',hum:52,pres:998,vis:8,fc:[
+      {d:'Today',hi:-9, lo:-16,w:38,ds:'Partly cloudy'},
+      {d:'Tue',  hi:-11,lo:-19,w:55,ds:'Snowfall expected'},
+      {d:'Wed',  hi:-14,lo:-22,w:78,ds:'Blizzard warning'},
+      {d:'Thu',  hi:-10,lo:-18,w:60,ds:'Winds subsiding'},
+      {d:'Fri',  hi:-8, lo:-15,w:30,ds:'Overcast, calm'},
+    ]},
+  },
+  bharati:{
+    id:'bharati',name:'Bharati',fullName:'Bharati Research Station',loc:'Larsemann Hills, E. Antarctica',lat:'69°24\'S',lon:'76°11\'E',est:2012,crew:6,
+    bv:BV_BHARATI,sensors:{},hist:{},
+    resupplyDate:'2027-02-20',resupplyShip:'MV Bharati',
+    equipment:[
+      {id:'beq1',name:'Diesel Generator',    cat:'gen',  health:91,status:'online', hrs:8200, next:'2027-03-01',loc:'Power House',risk:0},
+      {id:'beq2',name:'Solar Array (240kW)', cat:'solar',health:96,status:'online', hrs:5200, next:'2027-06-01',loc:'South Face', risk:0},
+      {id:'beq3',name:'Wind Turbine',        cat:'turb', health:88,status:'online', hrs:7600, next:'2026-11-15',loc:'Ridge',      risk:0},
+      {id:'beq4',name:'Battery Bank',        cat:'bat',  health:93,status:'online', hrs:4800, next:'2027-04-01',loc:'Power House',risk:0},
+      {id:'beq5',name:'HVAC System',         cat:'hvac', health:97,status:'online', hrs:4600, next:'2027-05-01',loc:'Main Module',risk:0},
+      {id:'beq6',name:'Reverse Osmosis Unit',cat:'pur',  health:85,status:'online', hrs:6200, next:'2026-10-20',loc:'Utility',    risk:0},
+      {id:'beq7',name:'VSAT Antenna',        cat:'com',  health:99,status:'online', hrs:8000, next:'2027-06-01',loc:'Roof',       risk:0},
+      {id:'beq8',name:'Ice Drill System',    cat:'sci',  health:78,status:'warning',hrs:3200, next:'2026-09-15',loc:'Field Lab',  risk:0},
+    ],
+    personnel:[
+      {id:'bp1',name:'Dr. Raj Patel',    role:'admin',   loc:'inside', area:'Control Room',act:'Station Management',safe:true,    wellness:{lastOutdoor:4, sunHrs:1.2,checkin:'Good'}},
+      {id:'bp2',name:'Eng. Leela Kumar', role:'engineer',loc:'inside', area:'Power House',  act:'System Check',safe:true,         wellness:{lastOutdoor:6, sunHrs:0.8,checkin:'Fair'}},
+      {id:'bp3',name:'Dr. Anjali Singh', role:'scientist',loc:'outside',area:'Ice Field',   act:'Core Sampling',safe:true,        wellness:{lastOutdoor:0, sunHrs:5.0,checkin:'Good'}},
+      {id:'bp4',name:'Dr. Nitin Sharma', role:'medical', loc:'inside', area:'Medical Bay',  act:'Inventory Check',safe:true,      wellness:{lastOutdoor:5, sunHrs:0.6,checkin:'Fair'}},
+      {id:'bp5',name:'Op. Suresh Roy',   role:'operator',loc:'inside', area:'Utility Block',act:'Filter Maintenance',safe:true,   wellness:{lastOutdoor:11,sunHrs:0.3,checkin:'Needs Attention'}},
+      {id:'bp6',name:'Eng. Deepa Nair',  role:'engineer',loc:'inside', area:'Lab',          act:'Equipment Calibration',safe:true, wellness:{lastOutdoor:2, sunHrs:2.5,checkin:'Good'}},
+    ],
+    inventory:[
+      {id:'bv1',n:'Diesel Fuel',      cat:'fuel',   qty:8200, max:15000,min:3000,u:'L',    rate:80, exp:null,        loc:'Fuel Tank'},
+      {id:'bv2',n:'Drinking Water',   cat:'water',  qty:4800, max:8000, min:1500,u:'L',    rate:55, exp:null,        loc:'Water Tank'},
+      {id:'bv3',n:'Food Rations',     cat:'food',   qty:280,  max:500,  min:40,  u:'packs',rate:6,  exp:'2026-03-01',loc:'Food Store'},
+      {id:'bv4',n:'Medical Oxygen',   cat:'medical',qty:18,   max:30,   min:8,   u:'cyl',  rate:.2, exp:null,        loc:'Medical Bay'},
+      {id:'bv5',n:'First Aid Kits',   cat:'medical',qty:12,   max:20,   min:4,   u:'kits', rate:.1, exp:'2026-04-01',loc:'Medical Bay'},
+      {id:'bv6',n:'Generator Spares', cat:'spares', qty:6,    max:12,   min:4,   u:'sets', rate:.04,exp:null,        loc:'Workshop'},
+      {id:'bv7',n:'Filter Cartridges',cat:'cons',   qty:28,   max:50,   min:15,  u:'units',rate:1.5,exp:null,        loc:'Utility'},
+      {id:'bv8',n:'Emergency Flares', cat:'emerg',  qty:36,   max:60,   min:15,  u:'units',rate:.04,exp:'2026-07-01',loc:'Emergency Bay'},
+    ],
+    workOrders:[
+      {id:'bw1',title:'Ice Drill Annual Service',pri:'high',   st:'assigned',   who:'Eng. Leela Kumar',eq:'beq8',due:'2026-01-10',note:'Annual maintenance check'},
+      {id:'bw2',title:'RO Unit Filter Replace',  pri:'medium', st:'open',       who:null,              eq:'beq6',due:'2026-01-20',note:'6-month filter change'},
+      {id:'bw3',title:'Solar Array Inspection',  pri:'low',    st:'completed',  who:'Eng. Deepa Nair', eq:'beq2',due:'2025-10-28',note:'Snow clearing done'},
+    ],
+    logbook:[
+      {id:'bl1',ts:'2025-10-22T07:00:00Z',user:'Dr. Raj Patel',   cat:'shift',  txt:'Morning handover. Station fully operational.'},
+      {id:'bl2',ts:'2025-10-22T10:30:00Z',user:'Dr. Anjali Singh', cat:'science',txt:'Ice core sample collected at 120m depth. Excellent quality.'},
+      {id:'bl3',ts:'2025-10-22T15:00:00Z',user:'Dr. Nitin Sharma', cat:'safety', txt:'Safety inspection complete. All emergency equipment functional.'},
+    ],
+    alerts:[
+      {id:'bal0',ts:new Date(Date.now()-30*60000).toISOString(),level:'warning',status:'active',title:'Fuel Level Below 50%',msg:'Fuel at 44%. Next resupply in 117 days.',loc:'Fuel Tank',action:'Monitor consumption. Consider rationing.'},
+    ],
+    weather:{temp:-16.2,feels:-25.8,wind:52,wdir:'SSW',hum:35,pres:984,vis:6,fc:[
+      {d:'Today',hi:-14,lo:-21,w:52,ds:'Strong winds'},
+      {d:'Tue',  hi:-16,lo:-24,w:68,ds:'Blizzard warning'},
+      {d:'Wed',  hi:-18,lo:-26,w:82,ds:'Severe blizzard'},
+      {d:'Thu',  hi:-15,lo:-23,w:55,ds:'Conditions improving'},
+      {d:'Fri',  hi:-13,lo:-20,w:40,ds:'Partly cloudy'},
+    ]},
+  }
+};
+
+/* ── SCENARIOS ────────────────────────────────────────────── */
+const SCEN=[
+  {id:'s1',ico:'bolt',   nm:'Main Generator Failure', ds:'Generator #1 fails. Battery backup engaged. 6h autonomy.',rk:'critical',resp:'Start backup immediately. Reduce load to <40kW. Alert HQ.'},
+  {id:'s2',ico:'activity',nm:'Battery Bank Failure',  ds:'Battery bank depletes rapidly. Full diesel dependency.',rk:'high',    resp:'Immediate maintenance. Conserve fuel. Reduce non-essential loads.'},
+  {id:'s3',ico:'activity',nm:'Prolonged Polar Night', ds:'Solar drops to zero for 30 days. Full diesel operation.',rk:'high',    resp:'Emergency resupply request. Reduce energy budget to 65kW.'},
+  {id:'s4',ico:'wind',   nm:'Extreme Blizzard',       ds:'Wind 150+ km/h. All outside activity halted.',rk:'critical',resp:'Recall all outside personnel. Secure equipment. Shelter in place.'},
+  {id:'s5',ico:'droplet',nm:'Fuel Shortage',          ds:'Fuel at 8%. Resupply delayed 2 weeks.',rk:'critical',resp:'Emergency resupply. Reduce consumption to <30kW. Prioritize heating.'},
+  {id:'s6',ico:'alert',  nm:'Lab Fire Alert',         ds:'Smoke detected in Lab Block. Fire suppression activated.',rk:'critical',resp:'Evacuate Lab Block. Fire protocol activated. Alert all personnel.'},
+  {id:'s7',ico:'satellite',nm:'Comms Outage',         ds:'Satellite link lost for 72 hours. Store-and-forward active.',rk:'high',resp:'Switch to backup VSAT. Increase local monitoring frequency.'},
+  {id:'s8',ico:'droplet',nm:'Water System Failure',   ds:'Purifier fails. 14-day reserve. Snow melt backup needed.',rk:'high',  resp:'Ration water immediately. Emergency repair. Contact HQ.'},
+];
+
+/* ── CONNECTIVITY STATE ──────────────────────────────────── */
+const CONN={status:'online',lastSync:new Date(),queue:[],syncing:false,syncProgress:0,bandwidth:'full',history:[{ts:new Date().toISOString(),event:'System online',type:'restore'}],uptime:100,totalDrops:0};
+
+/* ── SYSTEM SETTINGS STATE ───────────────────────────────── */
+const SETTINGS={
+  sound:true,
+  autoRefresh:true,
+  showOfflineBanner:true,
+  storeAndForward:true
+};
+
+/* ── APP STATE ────────────────────────────────────────────── */
+const APP={page:'login',user:null,token:null,station:'maitri',sound:true,simRun:null,connRun:null};
+const ST=()=>STATION_DATA[APP.station];
+
+/* ── HELPERS ──────────────────────────────────────────────── */
+const el=id=>document.getElementById(id);
+const qq=(s,ctx=document)=>[...ctx.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const drift=(v,d)=>v+(Math.random()-.5)*2*d;
+const fmt=(v,dp=1)=>typeof v==='number'?v.toFixed(dp):String(v??'');
+const ago=ts=>{const m=Math.round((Date.now()-new Date(ts))/60000);if(m<1)return'just now';if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago';};
+const nowISO=()=>new Date().toISOString();
+const hcol=h=>h>=80?'var(--green)':h>=60?'var(--yellow)':'var(--red)';
+const hcls=h=>h>=80?'tg':h>=60?'ty':'tr';
+const lcol=l=>l==='critical'?'var(--red)':l==='warning'?'var(--yellow)':'var(--cyan)';
+const lcls=l=>l==='critical'?'tr':l==='warning'?'ty':'tb';
+const prioC=p=>({critical:'tr',high:'tp',medium:'ty',low:'tg'}[p]||'tG');
+const stC=s=>({open:'tG','in-progress':'tb',assigned:'ty',completed:'tg',overdue:'tr'}[s]||'tG');
+const roleC=r=>(ROLES[r]||{color:'#64748b'}).color;
+const catLabel=c=>({gen:'Generator',solar:'Solar',turb:'Wind Turbine',bat:'Battery',hvac:'HVAC',pur:'Purifier',com:'Comms',saf:'Safety',sci:'Science',fuel:'Fuel',water:'Water',food:'Food',medical:'Medical',spares:'Spares',cons:'Consumables',emerg:'Emergency'}[c]||c);
+
+/* ── SINGLE SOURCE OF TRUTH: RESUPPLY COUNTDOWN ──────────── */
+function daysToResupply(stnId){
+  const stn=STATION_DATA[stnId||APP.station];
+  if(!stn)return 0;
+  return Math.max(0,Math.ceil((new Date(stn.resupplyDate)-new Date())/86400000));
+}
+
+/* ── SINGLE SOURCE OF TRUTH: RENEWABLE SHARE ─────────────── */
+function calcRenewableShare(stnId){
+  const stn=stnId?(STATION_DATA[stnId]||ST()):ST();
+  const s=stn.sensors;
+  const solar=s.solar_gen?.v??0;
+  const wind=s.wind_gen?.v??0;
+  const tot=s.power_gen?.v||(solar+wind+(s.diesel_gen?.v??0))||1;
+  return Math.round(((solar+wind)/tot)*100);
+}
+
+/* ── INVENTORY STATUS ──────────────────────────────────────── */
+function invSt(item){
+  const ratio=item.qty/item.min;
+  if(ratio<=1)return{cls:'tr',lbl:'Critical'};
+  if(ratio<=2)return{cls:'ty',lbl:'Warning'};
+  if(ratio<=3)return{cls:'tb',lbl:'Low'};
+  return{cls:'tg',lbl:'OK'};
+}
+
+/* ── TOAST & BEEP ───────────────────────────────────────────── */
+function toast(msg,t='b',dur=5000){
+  const c=el('toasts');if(!c)return;
+  const d=document.createElement('div');d.className='toast tst-'+t;d.innerHTML=msg;c.prepend(d);
+  setTimeout(()=>d.style.opacity='0',dur-400);setTimeout(()=>d.remove(),dur);
+}
+function beep(f=440){if(!SETTINGS.sound)return;try{const a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=f;g.gain.setValueAtTime(.25,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.4);o.start();o.stop(a.currentTime+.4);}catch(e){}}
+
+/* ── EXPLAINABLE RISK MODEL ─────────────────────────────────── */
+function calcRisk(e){
+  const ageFactor=clamp(e.hrs/30000,0,1);
+  const healthFactor=(100-e.health)/100;
+  const svcDue=new Date(e.next)<new Date()?0.25:0;
+  const risk=clamp(ageFactor*0.35+healthFactor*0.5+svcDue*0.15,0,1);
+  const parts=[];
+  if(healthFactor>0.15)parts.push(`Health decline (${Math.round(healthFactor*50)}%)`);
+  if(ageFactor>0.2)parts.push(`Operating hours (${Math.round(ageFactor*35)}%)`);
+  if(svcDue>0)parts.push('Service overdue (+25%)');
+  return{risk,pct:Math.round(risk*100),drivers:parts.length?parts:['Normal wear']};
+}
+
+/* ── SENSOR ENGINE ──────────────────────────────────────────── */
+function initStationSensors(stnId){
+  const stn=STATION_DATA[stnId];
+  const bv=stn.bv;
+  for(const[k,def]of Object.entries(SD)){
+    const v=bv[k]??((def.mn+def.mx)/2);
+    stn.sensors[k]={v:parseFloat(v.toFixed(2)),u:def.u,st:sSt(k,v)};
+    stn.hist[k]=[];
+    const tempHist=[];
+    let walkVal=v;
+    tempHist.push({ts:new Date().toISOString(),v:parseFloat(walkVal.toFixed(2))});
+    for(let i=1;i<=288;i++){
+      walkVal=clamp(drift(walkVal,def.d*0.6),def.mn,def.mx);
+      tempHist.unshift({ts:new Date(Date.now()-i*5*60000).toISOString(),v:parseFloat(walkVal.toFixed(2))});
+    }
+    stn.hist[k]=tempHist;
+  }
+  stn.equipment=stn.equipment.map(e=>{const r=calcRisk(e);return{...e,risk:r.risk};});
+}
+
+function sSt(k,v){
+  const def=SD[k];if(!def)return'ok';
+  const[lo,hi]=def.n;
+  if(k==='smoke_lab')return v>50?'crit':v>15?'warn':'ok';
+  if(k==='co_level')return v>35?'crit':v>25?'warn':'ok';
+  if(k==='fuel_level'||k==='battery_pct'||k==='water_level')return v<10?'crit':v<25?'warn':'ok';
+  if(v<lo*.85||v>hi*1.15)return'crit';if(v<lo||v>hi)return'warn';return'ok';
+}
+
+const LAF={};
+function simTick(){
+  for(const stnId of Object.keys(STATION_DATA)){
+    const stn=STATION_DATA[stnId];
+    const bv=stn.bv;
+    for(const[k,def]of Object.entries(SD)){
+      const old=stn.sensors[k]?.v??bv[k];
+      const nv=clamp(drift(old,def.d),def.mn,def.mx);
+      stn.sensors[k]={v:parseFloat(nv.toFixed(2)),u:def.u,st:sSt(k,nv)};
+      stn.hist[k].push({ts:nowISO(),v:parseFloat(nv.toFixed(2))});
+      if(stn.hist[k].length>360)stn.hist[k].shift();
+    }
+    for(const e of stn.equipment){
+      e.hrs+=0.001;
+      if(Math.random()<.001)e.health=clamp(e.health-(Math.random()*2),0,100);
+      const r=calcRisk(e);e.risk=r.risk;
+      e.status=e.health>=80?'online':e.health>=60?'warning':'critical';
+    }
+  }
+  queueOrTransmit();
+  chkAutoAlerts();
+  if(APP.page==='dashboard')refreshDTiles();
+  if(APP.page==='connectivity')refreshConnTiles();
+}
+
+function refreshConnTiles(){
+  const qlen=CONN.queue.length;
+  const qkb=(CONN.queue.reduce((s,x)=>s+(x.kb||0),0)).toFixed(1);
+  const elQ=el('conn-live-qlen');if(elQ)elQ.textContent=qlen;
+  const elKb=el('conn-live-qkb');if(elKb)elKb.textContent=qkb+' KB pending';
+  const elOffQ=el('conn-off-qlen');if(elOffQ)elOffQ.textContent=qlen;
+  const elOffKb=el('conn-off-qkb');if(elOffKb)elOffKb.textContent=qkb+' KB pending upload';
+  const elOffSens=el('conn-off-sens');if(elOffSens)elOffSens.textContent=`Estimated readings: ~${Math.round(qlen*Object.keys(SD).length)} sensor values`;
+}
+
+function chkAutoAlerts(){
+  const stn=ST();
+  const chks=[{k:'fuel_level',thr:25,lbl:'Fuel Level',loc:'Fuel Storage'},{k:'battery_pct',thr:30,lbl:'Battery',loc:'Power House'},{k:'water_level',thr:30,lbl:'Water Reserve',loc:'Water Tank'},{k:'smoke_lab',thr:15,lbl:'Smoke (Lab)',loc:'Lab Block'},{k:'co_level',thr:25,lbl:'CO Level',loc:'Station'}];
+  for(const c of chks){
+    const s=stn.sensors[c.k];if(!s)continue;
+    const key=APP.station+'_auto_'+c.k;
+    if(LAF[key]&&Date.now()-LAF[key]<5*60000)continue;
+    if(s.st==='crit'){LAF[key]=Date.now();mkAlert({title:'CRITICAL: '+c.lbl,msg:'Value: '+fmt(s.v)+s.u+'. Immediate action needed.',level:'critical',loc:c.loc,action:'Take immediate corrective action.'});}
+    else if(s.st==='warn'){LAF[key]=Date.now();mkAlert({title:'WARNING: '+c.lbl,msg:'Value: '+fmt(s.v)+s.u+'. Monitor closely.',level:'warning',loc:c.loc,action:'Schedule inspection.'});}
+  }
+}
+
+function mkAlert(a){
+  const al={id:'al'+Date.now()+Math.random().toString(36).slice(2),ts:nowISO(),status:'active',...a};
+  ST().alerts.unshift(al);if(ST().alerts.length>100)ST().alerts.pop();
+  toast('<strong>'+al.title+'</strong><br>'+al.msg,al.level==='critical'?'r':'y');
+  if(al.level==='critical')beep(880);else beep(660);
+  updBadge();
+}
+
+function updBadge(){
+  const cnt=ST().alerts.filter(a=>a.status==='active').length;
+  qq('[data-ab]').forEach(b=>{b.textContent=cnt>9?'9+':cnt;b.style.display=cnt?'inline-flex':'none';});
+}
+
+/* ── CONNECTIVITY ENGINE ────────────────────────────────────── */
+let connTimer=null;
+function initConn(){scheduleDrop();}
+function scheduleDrop(){
+  const ms=(10+Math.random()*10)*60*1000; // 10-20 min online
+  if(connTimer)clearTimeout(connTimer);
+  connTimer=setTimeout(startDrop,ms);
+}
+function manualSimDrop(){
+  if(connTimer)clearTimeout(connTimer);
+  if(CONN.status==='offline'){toast('Satellite link is already offline. Readings are queuing.','y');return;}
+  CONN.status='offline';CONN.bandwidth='none';
+  CONN.totalDrops++;
+  CONN.history.unshift({ts:nowISO(),event:'Simulated link outage initiated — offline banner active',type:'drop'});
+  if(CONN.history.length>25)CONN.history.pop();
+  updConnBanner();
+  toast('Satellite link outage simulated. Offline mode active across all pages.','r');
+  if(APP.page==='connectivity')rConnectivity();
+}
+function manualRestoreLink(){
+  if(connTimer)clearTimeout(connTimer);
+  if(CONN.status==='online'){toast('Satellite link is already online.','b');return;}
+  CONN.status='syncing';CONN.bandwidth='limited';
+  CONN.history.unshift({ts:nowISO(),event:`Satellite link restored — uploading ${CONN.queue.length} readings`,type:'restore'});
+  if(CONN.history.length>25)CONN.history.pop();
+  updConnBanner();
+  toast(`Satellite link restored. Uploading ${CONN.queue.length} queued readings...`,'b');
+  if(APP.page==='connectivity')rConnectivity();
+  startSync();
+}
+function startDrop(){
+  if(CONN.status==='offline')return;
+  CONN.status='offline';CONN.bandwidth='none';
+  CONN.totalDrops++;
+  CONN.history.unshift({ts:nowISO(),event:'Satellite link dropped (scheduled pass)',type:'drop'});
+  if(CONN.history.length>25)CONN.history.pop();
+  updConnBanner();
+  toast('Satellite link lost — switching to offline mode. Data will queue locally.','w');
+  const ms=(2+Math.random()*3)*60*1000; // 2-5 min offline
+  if(connTimer)clearTimeout(connTimer);
+  connTimer=setTimeout(endDrop,ms);
+}
+function endDrop(){
+  CONN.status='syncing';CONN.bandwidth='limited';
+  CONN.history.unshift({ts:nowISO(),event:'Link restored — syncing',type:'restore'});
+  if(CONN.history.length>15)CONN.history.pop();
+  updConnBanner();
+  toast('Satellite link restored. Uploading '+CONN.queue.length+' queued readings...','b');
+  startSync();
+}
+function startSync(){
+  if(CONN.queue.length===0){finalizeOnline();return;}
+  CONN.syncing=true;
+  const total=CONN.queue.length;let processed=0;
+  const iv=setInterval(()=>{
+    const batch=Math.min(3,CONN.queue.length);
+    CONN.queue.splice(0,batch);processed+=batch;
+    CONN.syncProgress=Math.min(Math.round(processed/total*100),100);
+    updConnBanner();
+    if(CONN.queue.length===0){clearInterval(iv);finalizeOnline();}
+  },600);
+}
+function finalizeOnline(){
+  CONN.status='online';CONN.lastSync=new Date();CONN.bandwidth='full';
+  CONN.syncing=false;CONN.syncProgress=0;
+  CONN.history.unshift({ts:nowISO(),event:'Sync complete — all data uploaded',type:'sync'});
+  updConnBanner();toast('Sync complete. All queued data uploaded to HQ.','g');
+  scheduleDrop();
+}
+function queueOrTransmit(){
+  if(CONN.status==='offline'){
+    if(SETTINGS.storeAndForward){
+      CONN.queue.push({ts:nowISO(),type:'sensor_batch',station:APP.station,count:Object.keys(SD).length,kb:parseFloat((Object.keys(SD).length*.065).toFixed(2))});
+      updConnBanner();
+    }
+  } else {
+    CONN.lastSync=new Date();
+  }
+}
+function updConnBanner(){
+  const b=el('conn-banner');if(!b)return;
+  const qlen=CONN.queue.length;
+  const qkb=(CONN.queue.reduce((s,x)=>s+(x.kb||0),0)).toFixed(1);
+  if(!SETTINGS.showOfflineBanner){
+    b.style.display='none';
+  } else if(CONN.status==='offline'){
+    b.style.display='flex';b.style.background='rgba(220,38,38,.08)';b.style.borderColor='rgba(220,38,38,.35)';
+    b.innerHTML=`<span style="color:var(--red)">${ic('wifioff',14)}</span><strong style="color:var(--red)">SATELLITE LINK OFFLINE</strong><span style="color:var(--muted)">— Last known state. Queued:</span><strong>${qlen} readings (${qkb} KB)</strong><span style="margin-left:auto;font-size:.7rem;color:var(--dim)">Will sync on link restoration</span>`;
+  } else if(CONN.status==='syncing'){
+    b.style.display='flex';b.style.background='rgba(217,119,6,.07)';b.style.borderColor='rgba(217,119,6,.3)';
+    b.innerHTML=`<span style="color:var(--yellow)">${ic('refresh',14)}</span><strong style="color:var(--yellow)">SYNCING</strong><span style="color:var(--muted)">Uploading ${qlen} queued readings</span><div style="flex:1;max-width:160px;height:5px;background:rgba(217,119,6,.2);border-radius:3px;overflow:hidden"><div style="width:${CONN.syncProgress}%;height:100%;background:var(--yellow);transition:width .4s"></div></div><strong style="color:var(--yellow)">${CONN.syncProgress}%</strong>`;
+  } else {
+    b.style.display='none';
+  }
+  // also update conn pill in topbar
+  const pill=el('conn-pill');
+  if(pill){
+    if(CONN.status==='online')pill.className='conn-pill conn-online';
+    else if(CONN.status==='offline')pill.className='conn-pill conn-offline';
+    else if(CONN.status==='syncing')pill.className='conn-pill conn-syncing';
+    pill.innerHTML=`<span class="dot ${CONN.status==='online'?'dg':CONN.status==='offline'?'dr':'dy'}" style="animation:${CONN.status!=='online'?'bl 1.2s infinite':'none'}"></span>${CONN.status.toUpperCase()}`;
+  }
+  if(APP.page==='connectivity')rConnectivity();
+}
+
+/* ── AUTH ───────────────────────────────────────────────────── */
+async function doLogin(em,pw){
+  const u=DEMO_USERS.find(x=>x.email===em&&x.pw===pw);
+  if(u){APP.user={...u};APP.token='tk_'+Date.now();return{ok:true};}
+  return{ok:false};
+}
+function doLogout(){APP.user=null;APP.token=null;go('login');}
+
+/* ── SWITCH STATION ─────────────────────────────────────────── */
+function switchStation(id){
+  if(APP.station===id)return;
+  APP.station=id;
+  qq('.stn-btn').forEach(b=>b.classList.toggle('act',b.dataset.s===id));
+  updBadge();
+  const pg=el('pg-'+APP.page);
+  if(pg){
+    pg.innerHTML=`
+      <div class="g4" style="margin-bottom:14px">
+        <div class="card card-sm skel" style="height:82px"></div>
+        <div class="card card-sm skel" style="height:82px"></div>
+        <div class="card card-sm skel" style="height:82px"></div>
+        <div class="card card-sm skel" style="height:82px"></div>
+      </div>
+      <div class="g2" style="margin-bottom:14px">
+        <div class="card card-md skel" style="height:210px"></div>
+        <div class="card card-md skel" style="height:210px"></div>
+      </div>`;
+  }
+  setTimeout(()=>{
+    go(APP.page==='login'?'dashboard':APP.page);
+  }, 100);
+}
+
+/* ── NAVIGATION DEFINITIONS ─────────────────────────────────── */
+const PT={dashboard:'Command Dashboard',hq:'HQ Station Overview',energy:'Energy Management',inventory:'Inventory & Logistics',equipment:'Equipment & Maintenance',environment:'Environmental Monitoring',personnel:'Personnel & Safety',twin:'Digital Station Twin',connectivity:'Connectivity & Sync',alerts:'Alert Center',emergency:'Emergency Response',simulation:'What-If Simulations',analytics:'Analytics & KPIs',reports:'Reports',logbook:'Digital Logbook',settings:'Settings'};
+const NAVDEF=[
+  {p:'dashboard',  ico:'dashboard', lb:'Dashboard'},
+  {p:'hq',         ico:'building',  lb:'HQ Overview'},
+  {sec:'Monitoring'},
+  {p:'energy',     ico:'bolt',      lb:'Energy'},
+  {p:'inventory',  ico:'package',   lb:'Inventory'},
+  {p:'equipment',  ico:'wrench',    lb:'Equipment'},
+  {p:'environment',ico:'globe',     lb:'Environment'},
+  {p:'personnel',  ico:'users',     lb:'Personnel'},
+  {p:'twin',       ico:'mountain',  lb:'Digital Twin'},
+  {p:'connectivity',ico:'satellite',lb:'Connectivity'},
+  {sec:'Operations'},
+  {p:'alerts',     ico:'bell',      lb:'Alerts',badge:true},
+  {p:'emergency',  ico:'siren',     lb:'Emergency'},
+  {p:'simulation', ico:'flask',     lb:'Simulations'},
+  {p:'logbook',    ico:'book',      lb:'Logbook'},
+  {sec:'Reports & Admin'},
+  {p:'analytics',  ico:'chart',     lb:'Analytics'},
+  {p:'reports',    ico:'document',  lb:'Reports'},
+  {p:'settings',   ico:'cog',       lb:'Settings'},
+];
+
+function go(page){
+  APP.page=page;
+  if(window.innerWidth<=768 && sbOpen){
+    sbOpen=false;
+    const s=el('sidebar');if(s)s.classList.add('collapsed');
+    const ov=el('sidebar-overlay');if(ov)ov.classList.remove('active');
+  }
+  if(page==='login'){rLogin();return;}
+  if(!APP.user){rLogin();return;}
+  if(!el('sidebar'))rShell();
+  qq('.page').forEach(p=>p.style.display='none');
+  const pg=el('pg-'+page);if(pg)pg.style.display='block';
+  qq('.ni').forEach(n=>n.classList.toggle('act',n.dataset.p===page));
+  const tt=el('topbar-title');if(tt)tt.textContent=PT[page]||page;
+  updBadge();
+  const fn={dashboard:rDash,hq:rHQ,energy:rEnergy,inventory:rInv,equipment:rEqp,environment:rEnv,personnel:rPersonnel,twin:rTwin,connectivity:rConnectivity,alerts:rAlerts,emergency:rEmerg,simulation:rSim,analytics:rAnalytics,reports:rReports,logbook:rLogbook,settings:rSettings};
+  if(fn[page])fn[page]();
+}
+
+function rShell(){
+  const nh=NAVDEF.map(n=>{
+    if(n.sec)return`<div class="ns">${n.sec}</div>`;
+    return`<button class="ni${APP.page===n.p?' act':''}" data-p="${n.p}" onclick="go('${n.p}')">${ic(n.ico,16,'ico')}<span class="lbl">${n.lb}</span>${n.badge?`<span class="nbadge" data-ab></span>`:''}</button>`;
+  }).join('');
+  const rc=roleC(APP.user?.role);
+  const init=(APP.user?.name||'U')[0];
+  el('app').innerHTML=`
+  <div id="sidebar">
+    <div class="nav-logo">
+      <div class="nav-logo-icon">${ic('snow',18)}</div>
+      <div id="sb-lbl" style="overflow:hidden;white-space:nowrap">
+        <div style="font-size:.86rem;font-weight:800;color:var(--text)">Station Command</div>
+        <div style="font-size:.66rem;color:var(--cyan);font-weight:700">Indian Antarctic Program</div>
+      </div>
+    </div>
+    <div class="stn-sw">
+      <button class="stn-btn${APP.station==='maitri'?' act':''}" data-s="maitri" onclick="switchStation('maitri')">Maitri</button>
+      <button class="stn-btn${APP.station==='bharati'?' act':''}" data-s="bharati" onclick="switchStation('bharati')">Bharati</button>
+    </div>
+    <nav>${nh}</nav>
+    <div style="border-top:1px solid var(--border);padding:10px 8px">
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 2px">
+        <div style="width:30px;height:30px;background:${rc};border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.85rem;color:#fff;flex-shrink:0">${init}</div>
+        <div id="sb-ui" style="flex:1;min-width:0;overflow:hidden">
+          <div style="font-size:.82rem;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${APP.user?.name}</div>
+          <div style="font-size:.70rem;color:var(--muted)">${(ROLES[APP.user?.role]||{}).label||''}</div>
+        </div>
+        <button onclick="doLogout()" title="Sign Out" style="background:none;border:none;color:var(--muted);flex-shrink:0;padding:5px;border-radius:6px">${ic('logout',16)}</button>
+      </div>
+      <button onclick="toggleSB()" style="width:100%;background:none;border:none;border-top:1px solid var(--border);color:var(--muted);padding:8px 4px;font-size:.76rem;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:4px;font-weight:600">${ic('chevron',14)} <span id="sb-cbl">Collapse</span></button>
+    </div>
+  </div>
+  <div id="main">
+    <div id="topbar">
+      <button onclick="toggleSB()" aria-label="Toggle Navigation Menu" style="background:none;border:none;color:var(--muted);padding:5px 8px;border-radius:6px;display:flex;align-items:center">${ic('menu',19)}</button>
+      <span id="topbar-title" style="font-weight:800;color:var(--text);font-size:1.05rem;flex:1">${PT[APP.page]||'Dashboard'}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div id="conn-pill" class="conn-pill conn-online"><span class="dot dg"></span>ONLINE</div>
+        <div style="display:flex;align-items:center;gap:4px;padding:3px 8px;background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.28);border-radius:9999px;font-size:.72rem;color:var(--cyan);font-weight:700"><span style="animation:bl 1.5s infinite;display:inline-block">●</span>LIVE</div>
+        <div id="clk" style="background:var(--card);border:1px solid var(--border);padding:4px 10px;border-radius:8px;font-size:.76rem;color:var(--muted);font-family:monospace;font-weight:600"></div>
+        <button onclick="go('alerts')" title="Alerts" style="position:relative;background:none;border:none;color:var(--muted);padding:5px;border-radius:6px">${ic('bell',18)}<span data-ab style="position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;border-radius:50%;width:14px;height:14px;font-size:.6rem;font-weight:700;display:none;place-items:center"></span></button>
+        <button onclick="go('emergency')" title="Emergency Protocol" style="background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.25);color:var(--red);padding:4px 8px;border-radius:7px;display:flex;align-items:center;gap:4px;font-size:.76rem;font-weight:700">${ic('siren',16)} SOS</button>
+      </div>
+    </div>
+    <div id="conn-banner" style="display:none;align-items:center;gap:8px;padding:8px 16px;font-size:.82rem;border-bottom:1px solid;flex-shrink:0;font-weight:500"></div>
+    <div style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+      ${NAVDEF.filter(n=>n.p).map(n=>`<div class="page" id="pg-${n.p}" style="display:none"></div>`).join('')}
+    </div>
+    <div class="footer-bar"><span>Indian Antarctic Program — Ministry of Earth Sciences, Govt. of India</span><span>Antarctic Station Command v3.0 | ASC-2026</span></div>
+  </div>`;
+  setInterval(()=>{const c=el('clk');if(c)c.textContent=new Date().toLocaleTimeString('en-IN',{hour12:false})+' IST';},1000);
+  updBadge();
+}
+
+let sbOpen=window.innerWidth>768;
+function toggleSB(){
+  sbOpen=!sbOpen;
+  const s=el('sidebar');if(!s)return;
+  s.classList.toggle('collapsed',!sbOpen);
+  const ov=el('sidebar-overlay');
+  if(ov)ov.classList.toggle('active',sbOpen&&window.innerWidth<=768);
+  const l=el('sb-cbl');if(l)l.textContent=sbOpen?'Collapse':'Expand';
+  setTimeout(()=>{
+    window.dispatchEvent(new Event('resize'));
+  },200);
+}
+
+/* ── LOGIN ──────────────────────────────────────────────────── */
+function rLogin(){
+  el('app').innerHTML=`
+  <div style="width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;z-index:2">
+    <div style="background:rgba(235,250,255,.88);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:16px;padding:36px 40px;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(2,119,168,.15)">
+      <div style="text-align:center;margin-bottom:24px">
+        <div style="width:52px;height:52px;background:linear-gradient(135deg,var(--cyan),var(--blue));border-radius:14px;display:grid;place-items:center;margin:0 auto 14px;color:#fff">${ic('snow',28)}</div>
+        <div style="font-size:1.3rem;font-weight:800;color:var(--text)">Antarctic Station Command</div>
+        <div style="font-size:.78rem;color:var(--cyan);margin-top:4px;font-weight:600">Indian Antarctic Research Network</div>
+        <div style="display:flex;gap:6px;justify-content:center;margin-top:10px">
+          <span class="tag tb">${ic('mountain',10)} Maitri</span>
+          <span class="tag tb">${ic('mountain',10)} Bharati</span>
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:.75rem;font-weight:600;color:var(--muted);display:block;margin-bottom:5px">Email Address</label>
+        <input id="lem" type="email" placeholder="user@station.gov.in" style="width:100%" autocomplete="username">
+      </div>
+      <div style="margin-bottom:8px;position:relative">
+        <label style="font-size:.75rem;font-weight:600;color:var(--muted);display:block;margin-bottom:5px">Password</label>
+        <input id="lpw" type="password" placeholder="••••••••" style="width:100%;padding-right:36px" onkeydown="if(event.key==='Enter')hLogin()">
+        <button onclick="togglePw()" style="position:absolute;right:10px;top:30px;background:none;border:none;color:var(--muted)">${ic('eye',14)}</button>
+      </div>
+      <div id="lerr" style="display:none;color:#b91c1c;font-size:.75rem;margin-bottom:8px;padding:6px 10px;background:rgba(220,38,38,.08);border-radius:6px;border:1px solid rgba(220,38,38,.2)"></div>
+      <button onclick="hLogin()" class="btn btn-p" style="width:100%;justify-content:center;padding:10px;font-size:.88rem;margin-top:8px">${ic('lock',15)} Sign In to Station</button>
+      <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
+        <div style="font-size:.7rem;color:var(--muted);margin-bottom:8px;font-weight:600">Quick Access — Demo Credentials:</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          ${DEMO_USERS.map(u=>`<button onclick="document.getElementById('lem').value='${u.email}';document.getElementById('lpw').value='${u.pw}'" style="padding:6px 8px;background:rgba(2,119,168,.08);border:1px solid var(--border);border-radius:7px;font-size:.7rem;color:var(--cyan);text-align:left;cursor:pointer"><strong>${u.role}</strong><br><span style="color:var(--muted)">${u.name.split(' ').slice(-1)[0]}</span></button>`).join('')}
+        </div>
+      </div>
+      <div style="margin-top:16px;text-align:center;font-size:.68rem;color:var(--muted)">Secure Platform — Indian Antarctic Program</div>
+    </div>
+  </div>`;
+}
+function togglePw(){const p=el('lpw');if(!p)return;p.type=p.type==='password'?'text':'password';}
+async function hLogin(){
+  const em=(el('lem')?.value||'').trim();
+  const pw=el('lpw')?.value||'';
+  const r=await doLogin(em,pw);
+  if(r.ok){go('dashboard');}
+  else{const e=el('lerr');if(e){e.style.display='block';e.textContent='Invalid credentials. Please try again.';}}
+}
+
+/* ── CANVAS CHART HELPERS ───────────────────────────────────── */
+function gH(stnId,key,pts=48){
+  const h=STATION_DATA[stnId].hist[key]||[];
+  if(!h.length)return[];
+  const step=Math.max(1,Math.floor(h.length/pts));
+  const out=[];for(let i=h.length-1;i>=0&&out.length<pts;i-=step)out.unshift(h[i]);
+  return out;
+}
+
+function lChart(cv,datasets,opts={}){
+  if(!cv)return;
+  const pw=cv.parentElement?cv.parentElement.clientWidth:0;
+  if(pw>60){
+    const tw=Math.round(cv.clientWidth||pw);
+    if(tw>100&&cv.width!==tw)cv.width=tw;
+  }
+  const ctx=cv.getContext('2d');const W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  const pad={t:14,r:16,b:28,l:46};
+  const cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+  const allV=datasets.flatMap(d=>d.data.map(p=>p.v));
+  if(!allV.length)return;
+  const mn=opts.mn??Math.min(...allV),mx=opts.mx??Math.max(...allV);
+  const range=mx-mn||1;
+  const sc=(v)=>pad.t+ch-((v-mn)/range*ch);
+  const sx=(i,tot)=>pad.l+i/(tot-1||1)*cw;
+  // grid
+  ctx.strokeStyle='rgba(2,119,168,.14)';ctx.lineWidth=.75;
+  for(let i=0;i<=4;i++){const y=pad.t+ch/4*i;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cw,y);ctx.stroke();}
+  // Y-axis labels: 12px bold with high contrast
+  ctx.fillStyle='#0c1f35';ctx.font='600 12px system-ui';ctx.textAlign='right';ctx.textBaseline='middle';
+  for(let i=0;i<=4;i++){const v=mx-(range/4*i);ctx.fillText(v.toFixed(0),pad.l-6,pad.t+ch/4*i);}
+  // X-axis time labels: 12px with good contrast
+  if(datasets[0]?.data.length>1){
+    const tot=datasets[0].data.length;
+    const idxs=[0,Math.floor(tot*.25),Math.floor(tot*.5),Math.floor(tot*.75),tot-1];
+    ctx.fillStyle='#234e6e';ctx.textAlign='center';ctx.textBaseline='top';ctx.font='600 12px system-ui';
+    for(const i of idxs){const d=datasets[0].data[i];if(!d)continue;const t=new Date(d.ts);ctx.fillText(`${t.getHours()}:${String(t.getMinutes()).padStart(2,'0')}`,sx(i,tot),pad.t+ch+6);}
+  }
+  // lines + fill
+  for(const ds of datasets){
+    if(!ds.data.length)continue;
+    const tot=ds.data.length;
+    ctx.beginPath();ctx.moveTo(sx(0,tot),sc(ds.data[0].v));
+    for(let i=1;i<tot;i++)ctx.lineTo(sx(i,tot),sc(ds.data[i].v));
+    ctx.strokeStyle=ds.color||'var(--cyan)';ctx.lineWidth=2;ctx.stroke();
+    if(ds.fill){
+      ctx.lineTo(sx(tot-1,tot),pad.t+ch);ctx.lineTo(pad.l,pad.t+ch);ctx.closePath();
+      ctx.fillStyle=ds.fill;ctx.fill();
+    }
+  }
+}
+
+function dChart(cv,slices){
+  if(!cv)return;
+  const ctx=cv.getContext('2d');const W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  const cx=W/2,cy=H/2,r=Math.min(W,H)*.38,ri=r*.62;
+  const tot=slices.reduce((s,x)=>s+x.v,0)||1;
+  let ang=-Math.PI/2;
+  for(const s of slices){
+    const a=s.v/tot*2*Math.PI;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,ang,ang+a);ctx.fillStyle=s.color;ctx.fill();
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,ang,ang+a);ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=1.5;ctx.stroke();
+    ang+=a;
+  }
+  ctx.beginPath();ctx.arc(cx,cy,ri,0,Math.PI*2);ctx.fillStyle='rgba(240,249,255,.95)';ctx.fill();
+  if(slices.length){const top=slices.reduce((a,b)=>a.v>b.v?a:b);ctx.fillStyle=top.color;ctx.font=`bold ${Math.round(W*.1)}px system-ui`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(Math.round(top.v/tot*100)+'%',cx,cy);}
+}
+
+function bChart(cv,labels,datasets){
+  if(!cv)return;
+  const pw=cv.parentElement?cv.parentElement.clientWidth:0;
+  if(pw>60){
+    const tw=Math.round(cv.clientWidth||pw);
+    if(tw>100&&cv.width!==tw)cv.width=tw;
+  }
+  const ctx=cv.getContext('2d');const W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  const pad={t:14,r:16,b:28,l:46};
+  const cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+  const allV=datasets.flatMap(d=>d.data);
+  const mx=Math.max(...allV,1);
+  const bw=cw/labels.length,bInner=bw*.55;
+  ctx.strokeStyle='rgba(2,119,168,.14)';ctx.lineWidth=.75;
+  for(let i=0;i<=4;i++){const y=pad.t+ch/4*i;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cw,y);ctx.stroke();}
+  ctx.fillStyle='#0c1f35';ctx.font='600 12px system-ui';ctx.textAlign='right';ctx.textBaseline='middle';
+  for(let i=0;i<=4;i++)ctx.fillText(Math.round(mx-mx/4*i),pad.l-6,pad.t+ch/4*i);
+  for(let i=0;i<labels.length;i++){
+    const x=pad.l+i*bw+(bw-bInner)/2;
+    for(let j=0;j<datasets.length;j++){
+      const v=datasets[j].data[i]||0;const bh=Math.max(2,(v/mx)*ch);
+      ctx.fillStyle=datasets[j].color||'var(--cyan)';
+      ctx.fillRect(x+j*(bInner/datasets.length),pad.t+ch-bh,bInner/datasets.length-2,bh);
+    }
+    ctx.fillStyle='#234e6e';ctx.font='600 12px system-ui';ctx.textAlign='center';ctx.textBaseline='top';
+    ctx.fillText(labels[i],pad.l+(i+.5)*bw,pad.t+ch+6);
+  }
+}
+
+let resizeDebounce=null;
+window.addEventListener('resize',()=>{
+  clearTimeout(resizeDebounce);
+  resizeDebounce=setTimeout(()=>{
+    if(APP.page==='dashboard')rDash();
+    else if(APP.page==='energy')rEnergy();
+    else if(APP.page==='analytics')rAnalytics();
+    else if(APP.page==='twin')drawIsoTwin();
+    else if(APP.page==='emergency')drawEvac(el('cv-evac'));
+  },120);
+});
+
+/* ── DASHBOARD ──────────────────────────────────────────────── */
+function rDash(){
+  const stn=ST();const s=stn.sensors;const inv=stn.inventory;
+  const actAlerts=stn.alerts.filter(a=>a.status==='active').length;
+  const onlinePct=Math.round(stn.equipment.filter(e=>e.status==='online').length/stn.equipment.length*100);
+  const outPers=stn.personnel.filter(p=>p.loc==='outside').length;
+  const fuel=s.fuel_level?.v??0;const bat=s.battery_pct?.v??0;const pgen=s.power_gen?.v??0;const pcon=s.power_cons?.v??0;
+  el('pg-dashboard').innerHTML=`
+  <div style="margin-bottom:18px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div>
+        <div style="font-size:1.1rem;font-weight:800;color:var(--text)">${stn.fullName}</div>
+        <div style="font-size:.75rem;color:var(--muted)">${ic('map',12)} ${stn.loc} &nbsp;|&nbsp; ${stn.lat}, ${stn.lon} &nbsp;|&nbsp; Est. ${stn.est}</div>
+      </div>
+      <div class="tag tg">${ic('check',11)} All Systems Monitored</div>
+    </div>
+    <div class="g4" id="kpi-row">
+      <div class="kpi"><div class="kpi-v" id="kv-fuel" style="color:${fuel<25?'var(--red)':fuel<50?'var(--yellow)':'var(--cyan)'}">${fmt(fuel)}%</div><div class="kpi-l">Fuel Level</div><div class="kpi-sub">${ic('droplet',10)} ${inv.find(i=>i.cat==='fuel')?.qty?.toLocaleString()||'—'} L remain</div></div>
+      <div class="kpi"><div class="kpi-v" id="kv-bat" style="color:${bat<25?'var(--red)':bat<50?'var(--yellow)':'var(--cyan)'}">${fmt(bat)}%</div><div class="kpi-l">Battery Bank</div><div class="kpi-sub">${ic('activity',10)} Temp: ${fmt(s.battery_temp?.v??0)}°C</div></div>
+      <div class="kpi"><div class="kpi-v" id="kv-pgen">${fmt(pgen)} kW</div><div class="kpi-l">Power Generated</div><div class="kpi-sub">${ic('bolt',10)} Load: ${fmt(pcon)} kW (${pgen>0?Math.round(pcon/pgen*100):0}%)</div></div>
+      <div class="kpi"><div class="kpi-v" style="color:${actAlerts>0?'var(--red)':'var(--green)'}">${actAlerts}</div><div class="kpi-l">Active Alerts</div><div class="kpi-sub">${ic('users',10)} ${outPers} personnel outside</div></div>
+    </div>
+  </div>
+  <div class="g2" style="margin-bottom:14px">
+    <div class="card card-md">
+      <div class="sec-hd">${ic('activity',14)} Power — Last 24h</div>
+      <canvas id="cv-pwr" class="chart-cv" height="140"></canvas>
+    </div>
+    <div class="card card-md">
+      <div class="sec-hd">${ic('bolt',14)} Energy Mix</div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <canvas id="cv-mix" width="120" height="120"></canvas>
+        <div style="font-size:.75rem;display:flex;flex-direction:column;gap:5px;flex:1">
+          ${[{lbl:'Solar',k:'solar_gen',c:'#f59e0b'},{lbl:'Wind',k:'wind_gen',c:'#0ea5e9'},{lbl:'Diesel',k:'diesel_gen',c:'#6d28d9'}].map(x=>`<div style="display:flex;align-items:center;gap:5px"><span class="dot" style="background:${x.c}"></span>${x.lbl}: <strong>${fmt(s[x.k]?.v??0)} kW</strong></div>`).join('')}
+          <div style="margin-top:4px;padding-top:5px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:.7rem;color:var(--muted)">Renewable Share:</span>
+            <strong style="color:var(--green)">${calcRenewableShare()}%</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="g2" style="margin-bottom:14px">
+    <div class="card card-md">
+      <div class="sec-hd">${ic('activity',14)} Sensor Grid</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        ${['temp_outdoor','temp_indoor','humidity','wind_speed','pressure','co2','air_quality','fuel_level','water_level'].map(k=>{
+          const sv=s[k];if(!sv)return'';
+          const st=sv.st;const cls=st==='crit'?'tr':st==='warn'?'ty':'tg';
+          return`<div class="card-sm" style="text-align:center">
+            <div style="font-size:.62rem;color:var(--muted);margin-bottom:2px">${SD[k].lbl}</div>
+            <div id="sv-${k}" style="font-size:1rem;font-weight:700;color:${st==='crit'?'var(--red)':st==='warn'?'var(--yellow)':'var(--text)'}">${fmt(sv.v)} <span style="font-size:.6rem">${sv.u}</span></div>
+            <span class="tag ${cls}" style="font-size:.6rem;margin-top:2px">${st==='crit'?'CRIT':st==='warn'?'WARN':'OK'}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+    <div class="card card-md">
+      <div class="sec-hd">${ic('bell',14)} Recent Alerts</div>
+      ${stn.alerts.slice(0,4).map(a=>`<div class="al-card ${a.level}" style="padding:8px 10px;margin-bottom:5px">
+        <span class="tag ${lcls(a.level)}" style="margin-bottom:3px">${a.level.toUpperCase()}</span>
+        <div style="font-size:.78rem;font-weight:600;color:var(--text)">${a.title}</div>
+        <div style="font-size:.7rem;color:var(--muted)">${ago(a.ts)}</div>
+      </div>`).join('')||'<div style="color:var(--muted);font-size:.8rem;text-align:center;padding:20px">No active alerts</div>'}
+      <button onclick="go('alerts')" class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:8px;font-size:.78rem">View All Alerts ${ic('chevron',12)}</button>
+    </div>
+  </div>
+  <div class="card card-md">
+    <div class="sec-hd">${ic('wrench',14)} Equipment Overview</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
+      ${stn.equipment.slice(0,10).map(e=>`<div class="card-sm" style="text-align:center">
+        <div style="font-size:.62rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px">${e.name.replace('Diesel Generator','DG').replace('Battery Bank','Battery').replace('Wind Turbine','WindTurb')}</div>
+        <div style="font-size:.9rem;font-weight:800;color:${hcol(e.health)}">${Math.round(e.health)}%</div>
+        <div class="prog"><div class="prog-fill" style="width:${e.health}%;background:${hcol(e.health)}"></div></div>
+        <span class="tag ${hcls(e.health)}" style="font-size:.6rem;margin-top:3px">${e.status.toUpperCase()}</span>
+      </div>`).join('')}
+    </div>
+  </div>`;
+  // draw charts
+  setTimeout(()=>{
+    const stnId=APP.station;
+    lChart(el('cv-pwr'),[
+      {data:gH(stnId,'power_gen',48),color:'#059669',fill:'rgba(5,150,105,.08)'},
+      {data:gH(stnId,'power_cons',48),color:'#dc2626',fill:'rgba(220,38,38,.05)'}
+    ],{mn:0});
+    dChart(el('cv-mix'),[
+      {v:s.solar_gen?.v??0,color:'#f59e0b'},
+      {v:s.wind_gen?.v??0, color:'#0ea5e9'},
+      {v:s.diesel_gen?.v??0,color:'#6d28d9'},
+    ]);
+  },50);
+}
+
+function refreshDTiles(){
+  const s=ST().sensors;
+  const defs={fuel_level:'kv-fuel',battery_pct:'kv-bat',power_gen:'kv-pgen'};
+  for(const[k,id]of Object.entries(defs)){const e=el(id);if(e&&s[k])e.textContent=fmt(s[k].v)+(k==='power_gen'?' kW':'%');}
+  ['temp_outdoor','temp_indoor','humidity','wind_speed','pressure','co2','air_quality','fuel_level','water_level'].forEach(k=>{
+    const e=el('sv-'+k);const sv=ST().sensors[k];
+    if(e&&sv)e.textContent=fmt(sv.v)+' '+sv.u;
+  });
+}
+
+/* ── HQ OVERVIEW ────────────────────────────────────────────── */
+function rHQ(){
+  const stns=Object.values(STATION_DATA);
+  el('pg-hq').innerHTML=`
+  <div style="margin-bottom:14px">
+    <div style="font-size:.8rem;color:var(--muted)">Indian Antarctic Program HQ — Monitoring both stations simultaneously. Switch to a station view for full module access.</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    ${stns.map(stn=>{
+      const s=stn.sensors;const actA=stn.alerts.filter(a=>a.status==='active').length;
+      const outP=stn.personnel.filter(p=>p.loc==='outside').length;
+      const eqOk=stn.equipment.filter(e=>e.status==='online').length;
+      const fuel=s.fuel_level?.v??0;const bat=s.battery_pct?.v??0;
+      const pgen=s.power_gen?.v??0;const pcon=s.power_cons?.v??0;
+      const health=Math.round((fuel+bat+(pgen>0?Math.min(100,pgen/1.5):50))/3);
+      return`<div class="card card-md">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-size:1rem;font-weight:800;color:var(--text)">${ic('mountain',14)} ${stn.fullName}</div>
+            <div style="font-size:.7rem;color:var(--muted)">${stn.loc} | Est. ${stn.est} | Crew: ${stn.crew}</div>
+          </div>
+          <div>
+            <div style="font-size:.65rem;color:var(--muted)">Station Health</div>
+            <div style="font-size:1.4rem;font-weight:800;color:${hcol(health)}">${health}%</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+          ${[
+            {lbl:'Fuel',v:fmt(fuel)+'%',c:fuel<25?'var(--red)':fuel<50?'var(--yellow)':'var(--green)',ico:'droplet'},
+            {lbl:'Battery',v:fmt(bat)+'%',c:bat<25?'var(--red)':bat<50?'var(--yellow)':'var(--green)',ico:'activity'},
+            {lbl:'Power Gen',v:fmt(pgen)+' kW',c:'var(--cyan)',ico:'bolt'},
+            {lbl:'Consumption',v:fmt(pcon)+' kW',c:'var(--muted)',ico:'bolt'},
+            {lbl:'Active Alerts',v:actA,c:actA>0?'var(--red)':'var(--green)',ico:'bell'},
+            {lbl:'Outside Personnel',v:outP,c:outP>0?'var(--yellow)':'var(--green)',ico:'users'},
+            {lbl:'Equipment Online',v:eqOk+'/'+stn.equipment.length,c:'var(--cyan)',ico:'wrench'},
+            {lbl:'Wind Speed',v:fmt(s.wind_speed?.v??0)+' km/h',c:'var(--muted)',ico:'wind'},
+          ].map(x=>`<div class="card-sm" style="display:flex;align-items:center;gap:8px">
+            <span style="color:${x.c}">${ic(x.ico,14)}</span>
+            <div><div style="font-size:.68rem;color:var(--muted)">${x.lbl}</div><div style="font-size:.88rem;font-weight:700;color:${x.c}">${x.v}</div></div>
+          </div>`).join('')}
+        </div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:.68rem;color:var(--muted);margin-bottom:4px">Next Resupply</div>
+          <div style="font-size:.78rem;font-weight:600;color:var(--text)">${ic('ship',12)} ${stn.resupplyShip} — ${stn.resupplyDate}</div>
+          <div style="font-size:.7rem;color:var(--dim)">${Math.max(0,Math.ceil((new Date(stn.resupplyDate)-new Date())/86400000))} days away</div>
+        </div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:.68rem;color:var(--muted);margin-bottom:5px">Recent Alerts</div>
+          ${stn.alerts.slice(0,2).map(a=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span class="tag ${lcls(a.level)}" style="font-size:.6rem">${a.level.slice(0,4).toUpperCase()}</span><span style="font-size:.72rem;color:var(--text)">${a.title}</span></div>`).join('')||`<div style="font-size:.72rem;color:var(--green)">${ic('check',12)} No active alerts</div>`}
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-p" style="flex:1;justify-content:center;font-size:.75rem" onclick="switchStation('${stn.id}');go('dashboard')">Open Dashboard</button>
+          <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:.75rem" onclick="switchStation('${stn.id}');go('alerts')">View Alerts</button>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>
+  <div class="card card-md" style="margin-top:14px">
+    <div class="sec-hd">${ic('chart',14)} Cross-Station Comparison</div>
+    <table class="tbl">
+      <thead><tr><th>Metric</th><th>Maitri</th><th>Bharati</th><th>Status</th></tr></thead>
+      <tbody>
+        ${[
+          {lbl:'Fuel Level',k:'fuel_level',unit:'%'},
+          {lbl:'Battery',k:'battery_pct',unit:'%'},
+          {lbl:'Indoor Temp',k:'temp_indoor',unit:'°C'},
+          {lbl:'Power Gen',k:'power_gen',unit:'kW'},
+          {lbl:'Wind Speed',k:'wind_speed',unit:'km/h'},
+          {lbl:'Water Reserve',k:'water_level',unit:'%'},
+        ].map(row=>{
+          const mv=STATION_DATA.maitri.sensors[row.k]?.v??0;
+          const bv2=STATION_DATA.bharati.sensors[row.k]?.v??0;
+          const diff=mv-bv2;const better=diff>0?'Maitri':'Bharati';
+          return`<tr><td style="font-weight:600">${row.lbl}</td><td>${fmt(mv)} ${row.unit}</td><td>${fmt(bv2)} ${row.unit}</td><td><span class="tag tb">${better} +${fmt(Math.abs(diff),1)}</span></td></tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+/* ── ENERGY ─────────────────────────────────────────────────── */
+function rEnergy(){
+  const stnId=APP.station;const s=ST().sensors;
+  const pgen=s.power_gen?.v??0;const pcon=s.power_cons?.v??0;const bat=s.battery_pct?.v??0;
+  const solar=s.solar_gen?.v??0;const wind=s.wind_gen?.v??0;const diesel=s.diesel_gen?.v??0;
+  const netBalance=pgen-pcon;
+  const isDeficit=netBalance<0;
+  const totGen=pgen||(solar+wind+diesel)||1;
+  const renewShare=calcRenewableShare();
+  el('pg-energy').innerHTML=`
+  <div class="g4" style="margin-bottom:14px">
+    <div class="kpi"><div class="kpi-v">${fmt(pgen)} kW</div><div class="kpi-l">Total Generation</div></div>
+    <div class="kpi"><div class="kpi-v" style="color:${pcon>pgen?'var(--red)':'var(--text)'}">${fmt(pcon)} kW</div><div class="kpi-l">Consumption</div></div>
+    <div class="kpi"><div class="kpi-v" style="color:${isDeficit?'var(--red)':'var(--green)'}">${isDeficit?'−'+fmt(-netBalance):fmt(netBalance)} kW</div><div class="kpi-l">${isDeficit?'Net Deficit':'Net Surplus'}</div><div class="kpi-sub" style="color:${isDeficit?'var(--red)':'var(--dim)'}">${isDeficit?'Drawing from battery':'Energy available'}</div></div>
+    <div class="kpi"><div class="kpi-v" style="color:${bat<30?'var(--red)':bat<60?'var(--yellow)':'var(--green)'}">${fmt(bat)}%</div><div class="kpi-l">Battery Reserve</div></div>
+  </div>
+  <div class="g2" style="margin-bottom:14px">
+    <div class="card card-md">
+      <div class="sec-hd">${ic('activity',14)} Generation vs Consumption — 24h</div>
+      <canvas id="cv-en" class="chart-cv" height="150"></canvas>
+      <div style="display:flex;gap:12px;margin-top:8px;font-size:.78rem">
+        <div style="display:flex;align-items:center;gap:4px"><span class="dot" style="background:#059669"></span>Generation</div>
+        <div style="display:flex;align-items:center;gap:4px"><span class="dot" style="background:#dc2626"></span>Consumption</div>
+      </div>
+    </div>
+    <div class="card card-md">
+      <div class="sec-hd">${ic('bolt',14)} Generation Mix</div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <canvas id="cv-emix" width="110" height="110"></canvas>
+        <div style="font-size:.78rem;display:flex;flex-direction:column;gap:8px;flex:1">
+          ${[{lbl:'Solar',v:solar,c:'#f59e0b'},{lbl:'Wind',v:wind,c:'#0ea5e9'},{lbl:'Diesel',v:diesel,c:'#6d28d9'}].map(x=>`
+            <div><div style="display:flex;align-items:center;gap:5px;margin-bottom:2px"><span class="dot" style="background:${x.c}"></span>${x.lbl}</div>
+            <div class="prog"><div class="prog-fill" style="width:${Math.round(x.v/totGen*100)}%;background:${x.c}"></div></div>
+            <div style="font-size:.7rem;color:var(--muted)">${fmt(x.v)} kW (${Math.round(x.v/totGen*100)}%)</div>
+          </div>`).join('')}
+          <div style="margin-top:4px;padding-top:6px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:.72rem;color:var(--muted)">Renewable Share:</span>
+            <strong style="color:var(--green);font-size:.82rem">${renewShare}%</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card card-md">
+    <div class="sec-hd">${ic('activity',14)} Battery State — 24h</div>
+    <canvas id="cv-bat" class="chart-cv" height="110"></canvas>
+  </div>
+  <div class="card card-md" style="margin-top:14px">
+    <div class="sec-hd">${ic('bolt',14)} AI Energy Recommendations</div>
+    <div class="g3">
+      ${[
+        {t:'Renewable Utilisation',d:`Current renewable share: ${renewShare}% of total generation. Target >70% for reduced diesel dependency.`,cls:renewShare>=70?'tg':'ty'},
+        {t:'Load Optimisation',d:`Consumption at ${pgen>0?Math.min(999,Math.round(pcon/pgen*100)):0}% of generation. ${pcon>pgen*0.9?'Consider shedding non-essential loads.':'Load balanced — no action needed.'}`,cls:pcon>pgen*.9?'ty':'tg'},
+        {t:'Battery Strategy',d:`Battery at ${fmt(bat)}%. ${bat<50?'Increase charging priority during peak solar.':'Reserve adequate for overnight autonomy.'}`,cls:bat<50?'ty':'tg'},
+      ].map(r=>`<div class="card-sm"><div class="tag ${r.cls}" style="margin-bottom:6px">${r.t}</div><div style="font-size:.78rem;color:var(--muted)">${r.d}</div></div>`).join('')}
+    </div>
+  </div>`;
+  setTimeout(()=>{
+    lChart(el('cv-en'),[{data:gH(stnId,'power_gen',48),color:'#059669',fill:'rgba(5,150,105,.08)'},{data:gH(stnId,'power_cons',48),color:'#dc2626',fill:'rgba(220,38,38,.05)'}],{mn:0});
+    dChart(el('cv-emix'),[{v:solar,color:'#f59e0b'},{v:wind,color:'#0ea5e9'},{v:diesel,color:'#6d28d9'}]);
+    lChart(el('cv-bat'),[{data:gH(stnId,'battery_pct',48),color:'#0ea5e9',fill:'rgba(14,165,233,.08)'}],{mn:0,mx:100});
+  },50);
+}
+
+/* ── INVENTORY ──────────────────────────────────────────────── */
+function rInv(){
+  const stn=ST();const inv=stn.inventory;
+  const critical=inv.filter(i=>invSt(i).lbl==='Critical').length;
+  const warning=inv.filter(i=>invSt(i).lbl==='Warning').length;
+  const totalKgFuel=inv.find(i=>i.cat==='fuel')?.qty||0;
+  el('pg-inventory').innerHTML=`
+  <div class="g4" style="margin-bottom:14px">
+    <div class="kpi"><div class="kpi-v">${inv.length}</div><div class="kpi-l">Total Items</div></div>
+    <div class="kpi"><div class="kpi-v" style="color:var(--red)">${critical}</div><div class="kpi-l">Critical Stock</div></div>
+    <div class="kpi"><div class="kpi-v" style="color:var(--yellow)">${warning}</div><div class="kpi-l">Low Stock</div></div>
+    <div class="kpi"><div class="kpi-v">${(totalKgFuel/1000).toFixed(1)} kL</div><div class="kpi-l">Fuel Reserve</div></div>
+  </div>
+  <div class="tabs" id="inv-tabs">
+    <button class="tab act" onclick="sTab(this,'inv-stock')">Stock Levels</button>
+    <button class="tab" onclick="sTab(this,'inv-resupply')">Resupply Planner</button>
+    <button class="tab" onclick="sTab(this,'inv-forecast')">Consumption Forecast</button>
+  </div>
+  <div id="inv-stock">
+    <div class="card card-md">
+      <table class="tbl">
+        <thead><tr><th>Item</th><th>Category</th><th>Stock</th><th>Level</th><th>Daily Rate</th><th>Days Left</th><th>Status</th>${canDo('inventory.update')?'<th>Action</th>':''}</tr></thead>
+        <tbody>
+          ${inv.map(item=>{
+            const st=invSt(item);
+            const daysLeft=Math.round(item.qty/item.rate);
+            const pctFull=Math.round(item.qty/(item.max||item.qty*2)*100);
+            return`<tr>
+              <td style="font-weight:600">${item.n}</td>
+              <td><span class="tag tG">${catLabel(item.cat)}</span></td>
+              <td>${item.qty.toLocaleString()} ${item.u} <div class="prog" style="width:80px;display:inline-block;vertical-align:middle;margin-left:4px"><div class="prog-fill" style="width:${pctFull}%;background:${st.lbl==='Critical'?'var(--red)':st.lbl==='Warning'?'var(--yellow)':st.lbl==='Low'?'var(--cyan)':'var(--green)'}"></div></div></td>
+              <td>${item.loc}</td>
+              <td>${item.rate} ${item.u}/d</td>
+              <td style="font-weight:700;color:${daysLeft<30?'var(--red)':daysLeft<60?'var(--yellow)':'var(--text)'}">${daysLeft}d</td>
+              <td><span class="tag ${st.cls}">${st.lbl}</span></td>
+              ${canDo('inventory.update')?`<td><button class="btn btn-ghost" style="padding:3px 8px;font-size:.7rem" onclick="alert('Update inventory for: ${item.n}')">Update</button></td>`:''}
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div id="inv-resupply" style="display:none">
+    <div style="background:rgba(2,119,168,.06);border:1px solid rgba(2,119,168,.2);border-radius:10px;padding:14px;margin-bottom:14px">
+      <div style="font-size:.82rem;font-weight:700;color:var(--cyan);margin-bottom:6px">${ic('ship',14)} Next Resupply Window</div>
+      <div style="display:flex;gap:20px;font-size:.8rem">
+        <div>${ic('ship',12)} <strong>${stn.resupplyShip}</strong></div>
+        <div>Scheduled: <strong>${stn.resupplyDate}</strong></div>
+        <div>Days remaining: <strong style="color:var(--cyan)">${Math.max(0,Math.ceil((new Date(stn.resupplyDate)-new Date())/86400000))} days</strong></div>
+      </div>
+      <div style="margin-top:8px;font-size:.75rem;color:var(--muted);border-top:1px solid var(--border);padding-top:8px">
+        Items flagged RED will fall below critical threshold before the resupply vessel arrives. Immediate HQ notification required for these items.
+      </div>
+    </div>
+    ${inv.map(item=>{
+      const daysToResupply=Math.max(0,Math.ceil((new Date(stn.resupplyDate)-new Date())/86400000));
+      const daysToEmpty=Math.floor(item.qty/item.rate);
+      const daysToMin=Math.floor((item.qty-item.min)/item.rate);
+      const willRunOut=daysToMin<daysToResupply;
+      const buffer=daysToMin-daysToResupply;
+      const cls=willRunOut?'rsup-crit':buffer<14?'rsup-warn':'rsup-ok';
+      const emergQty=willRunOut?Math.ceil((daysToResupply-daysToMin)*item.rate+item.min):0;
+      return`<div class="${cls}">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-weight:700;color:var(--text);font-size:.85rem">${item.n} <span class="tag ${willRunOut?'tr':buffer<14?'ty':'tg'}" style="font-size:.65rem">${willRunOut?'WILL RUN OUT':buffer<14?'TIGHT':'SAFE'}</span></div>
+            <div style="font-size:.75rem;color:var(--muted);margin-top:3px">Current: ${item.qty.toLocaleString()} ${item.u} | Rate: ${item.rate} ${item.u}/day | Min threshold: ${item.min.toLocaleString()} ${item.u}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:.75rem;color:var(--muted)">Hits minimum in</div>
+            <div style="font-size:1.1rem;font-weight:800;color:${willRunOut?'var(--red)':buffer<14?'var(--yellow)':'var(--green)'}">${daysToMin}d</div>
+          </div>
+        </div>
+        ${willRunOut?`<div style="margin-top:8px;padding:6px 10px;background:rgba(220,38,38,.1);border-radius:6px;font-size:.75rem;color:#991b1b">
+          <strong>Action required:</strong> Emergency order needed — ${emergQty.toLocaleString()} ${item.u} minimum to cover gap until resupply.
+        </div>`:''}
+        ${!willRunOut&&buffer<14?`<div style="margin-top:6px;font-size:.72rem;color:#92400e">Buffer: ${buffer} days past resupply — consider increasing next order quantity.</div>`:''}
+      </div>`;
+    }).join('')}
+  </div>
+  <div id="inv-forecast" style="display:none">
+    <div class="card card-md">
+      <div class="sec-hd">${ic('activity',14)} Fuel Consumption — 30-day Forecast</div>
+      <canvas id="cv-fuel" class="chart-cv" height="150"></canvas>
+    </div>
+  </div>`;
+  setTimeout(()=>{
+    const stnId=APP.station;
+    lChart(el('cv-fuel'),[{data:gH(stnId,'fuel_level',30),color:'#d97706',fill:'rgba(217,119,6,.08)'}],{mn:0,mx:100});
+  },50);
+}
+
+/* ── EQUIPMENT ──────────────────────────────────────────────── */
+function rEqp(){
+  const stn=ST();const eq=stn.equipment;const wo=stn.workOrders;
+  const onl=eq.filter(e=>e.status==='online').length;
+  const warn=eq.filter(e=>e.status==='warning').length;
+  const crit=eq.filter(e=>e.status==='critical').length;
+  const avgH=Math.round(eq.reduce((s,e)=>s+e.health,0)/eq.length);
+  el('pg-equipment').innerHTML=`
+  <div class="g4" style="margin-bottom:14px">
+    <div class="kpi"><div class="kpi-v">${eq.length}</div><div class="kpi-l">Total Equipment</div></div>
+    <div class="kpi"><div class="kpi-v" style="color:var(--green)">${onl}</div><div class="kpi-l">Online</div></div>
+    <div class="kpi"><div class="kpi-v" style="color:var(--yellow)">${warn}</div><div class="kpi-l">Warning</div></div>
+    <div class="kpi"><div class="kpi-v" style="color:var(--cyan)">${avgH}%</div><div class="kpi-l">Avg Health</div></div>
+  </div>
+  <div class="tabs">
+    <button class="tab act" onclick="sTab(this,'eq-cards')">Equipment Status</button>
+    <button class="tab" onclick="sTab(this,'eq-wo')">Work Orders (${wo.filter(w=>w.st!=='completed').length})</button>
+    <button class="tab" onclick="sTab(this,'eq-ai')">Predictive Analysis</button>
+  </div>
+  <div id="eq-cards">
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
+      ${eq.map(e=>{
+        const r=calcRisk(e);
+        return`<div class="card card-md">
+          <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px">
+            <div style="flex:1">
+              <div style="font-weight:700;color:var(--text)">${e.name}</div>
+              <div style="font-size:.7rem;color:var(--muted)">${ic('map',10)} ${e.loc} | ${catLabel(e.cat)}</div>
+            </div>
+            <span class="tag ${e.status==='online'?'tg':e.status==='warning'?'ty':'tr'}">${e.status.toUpperCase()}</span>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <div style="flex:1"><div style="font-size:.68rem;color:var(--muted)">Health</div><div style="font-weight:700;color:${hcol(e.health)}">${Math.round(e.health)}%</div><div class="prog"><div class="prog-fill" style="width:${e.health}%;background:${hcol(e.health)}"></div></div></div>
+            <div style="flex:1"><div style="font-size:.68rem;color:var(--muted)">Hours</div><div style="font-weight:600;font-size:.88rem">${e.hrs.toFixed(0)}h</div></div>
+            <div style="flex:1"><div style="font-size:.68rem;color:var(--muted)">Next Service</div><div style="font-weight:600;font-size:.78rem;color:${new Date(e.next)<new Date()?'var(--red)':'var(--text)'}">${e.next}</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="tag ${r.pct<20?'tg':r.pct<50?'ty':r.pct<75?'tp':'tr'}" style="font-size:.65rem">Risk: ${r.pct}%</span>
+            ${canDo('equipment.edit')?`<button class="btn btn-ghost" style="padding:2px 8px;font-size:.68rem;margin-left:auto" onclick="alert('Update health for: '+this.closest('.card').querySelector('div>div').textContent)">Update Health</button>`:''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+  <div id="eq-wo" style="display:none">
+    ${canDo('workorder.create')?`<div style="margin-bottom:12px"><button class="btn btn-p" onclick="alert('Create work order')">${ic('plus',14)} New Work Order</button></div>`:''}
+    ${wo.map(w=>`<div class="al-card" style="margin-bottom:8px">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <span class="tag ${prioC(w.pri)}">${w.pri.toUpperCase()}</span>
+          <span class="tag ${stC(w.st)}">${w.st.replace('-',' ').toUpperCase()}</span>
+        </div>
+        <div style="font-weight:700;color:var(--text)">${w.title}</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:3px">${ic('users',10)} ${w.who||'Unassigned'} | Due: ${w.due} | Note: ${w.note}</div>
+      </div>
+      ${canDo('workorder.close')&&w.st!=='completed'?`<button class="btn btn-g" style="padding:4px 10px;font-size:.72rem" onclick="woDone('${w.id}')">Mark Done</button>`:''}
+    </div>`).join('')}
+  </div>
+  <div id="eq-ai" style="display:none">
+    <div style="background:rgba(2,119,168,.05);border:1px solid rgba(2,119,168,.15);border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.78rem;color:var(--muted)">
+      <strong style="color:var(--cyan)">${ic('activity',13)} Explainable Risk Model</strong> — Risk scores are computed from three measurable factors: equipment health trend (50% weight), normalized operating hours (35%), and service schedule overdue penalty (15%). All factors are logged for audit.
+    </div>
+    <table class="tbl">
+      <thead><tr><th>Equipment</th><th>Health</th><th>Hours</th><th>Service Due</th><th>Risk Score</th><th>Risk Drivers</th><th>Recommendation</th></tr></thead>
+      <tbody>
+        ${eq.map(e=>{
+          const r=calcRisk(e);const overdue=new Date(e.next)<new Date();
+          const hasOverdue=overdue||r.drivers.some(d=>d.toLowerCase().includes('overdue'));
+          const hasDecline=(e.health<80)||r.drivers.some(d=>d.toLowerCase().includes('health decline'));
+          let rec='Routine monitoring';
+          let recCls='color:var(--text)';
+          if(hasOverdue&&hasDecline){
+            rec='Schedule service (Overdue + Health decline)';
+            recCls='color:var(--red);font-weight:700';
+          }else if(hasOverdue){
+            rec='Schedule service (Service overdue)';
+            recCls='color:var(--red);font-weight:700';
+          }else if(hasDecline){
+            rec='Schedule service (Health decline)';
+            recCls='color:var(--yellow);font-weight:700';
+          }else if(r.pct>=50){
+            rec='Inspect within 7 days';
+            recCls='color:var(--orange);font-weight:600';
+          }else if(r.pct>=25){
+            rec='Inspect within 30 days';
+            recCls='color:var(--muted)';
+          }
+          return`<tr>
+            <td style="font-weight:600">${e.name}</td>
+            <td><span style="color:${hcol(e.health)}">${Math.round(e.health)}%</span></td>
+            <td>${e.hrs.toFixed(0)}h</td>
+            <td><span class="tag ${overdue?'tr':'tg'}">${overdue?'OVERDUE':e.next}</span></td>
+            <td><div style="display:flex;align-items:center;gap:6px"><div class="prog" style="width:60px"><div class="prog-fill" style="width:${r.pct}%;background:${r.pct<20?'var(--green)':r.pct<50?'var(--yellow)':r.pct<75?'var(--orange)':'var(--red)'}"></div></div><strong style="color:${r.pct<20?'var(--green)':r.pct<50?'var(--yellow)':r.pct<75?'var(--orange)':'var(--red)'}">${r.pct}%</strong></div></td>
+            <td style="font-size:.72rem;color:var(--muted)">${r.drivers.join(', ')}</td>
+            <td style="font-size:.72rem;${recCls}">${rec}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+function woDone(id){
+  const wo=ST().workOrders.find(w=>w.id===id);if(wo)wo.st='completed';
+  rEqp();toast('Work order marked as completed.','g');
+}
+
+/* ── ENVIRONMENT ─────────────────────────────────────────────── */
+function rEnv(){
+  const stnId=APP.station;const s=ST().sensors;
+  const wth=ST().weather;
+  el('pg-environment').innerHTML=`
+  <div class="g4" style="margin-bottom:14px">
+    <div class="kpi"><div class="kpi-v">${fmt(s.temp_outdoor?.v??0)}°C</div><div class="kpi-l">Outdoor Temp</div><div class="kpi-sub">Feels ${fmt(wth.feels??0)}°C</div></div>
+    <div class="kpi"><div class="kpi-v">${fmt(s.wind_speed?.v??0)} km/h</div><div class="kpi-l">Wind Speed</div><div class="kpi-sub">${wth.wdir||'N/A'}</div></div>
+    <div class="kpi"><div class="kpi-v">${fmt(s.humidity?.v??0)}%</div><div class="kpi-l">Humidity</div></div>
+    <div class="kpi"><div class="kpi-v">${fmt(s.pressure?.v??0,0)} hPa</div><div class="kpi-l">Pressure</div></div>
+  </div>
+  <div class="tabs">
+    <button class="tab act" onclick="sTab(this,'env-charts')">Sensor Charts</button>
+    <button class="tab" onclick="sTab(this,'env-air')">Air Quality</button>
+    <button class="tab" onclick="sTab(this,'env-weather')">Weather Forecast</button>
+  </div>
+  <div id="env-charts">
+    <div class="g2">
+      ${[['temp_outdoor','Outdoor Temperature','#0ea5e9'],['wind_speed','Wind Speed','#6d28d9'],['humidity','Humidity','#059669'],['pressure','Pressure','#d97706']].map(([k,lbl,col])=>`
+      <div class="card card-md">
+        <div class="sec-hd">${ic('activity',13)} ${lbl}</div>
+        <canvas id="cv-${k}" class="chart-cv" height="120"></canvas>
+      </div>`).join('')}
+    </div>
+  </div>
+  <div id="env-air" style="display:none">
+    <div class="g3">
+      ${['co2','air_quality','smoke_lab','co_level','battery_temp','humidity'].map(k=>{
+        const sv=s[k];if(!sv)return'';
+        const st=sv.st;const cls=st==='crit'?'tr':st==='warn'?'ty':'tg';
+        return`<div class="kpi">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <div style="font-size:.72rem;font-weight:600;color:var(--muted)">${SD[k].lbl}</div>
+            <span class="tag ${cls}">${st==='crit'?'CRITICAL':st==='warn'?'WARNING':'NORMAL'}</span>
+          </div>
+          <div class="kpi-v">${fmt(sv.v)} <span style="font-size:.75rem;font-weight:400;color:var(--muted)">${sv.u}</span></div>
+          <div class="prog" style="margin-top:6px"><div class="prog-fill" style="width:${Math.min(100,Math.round(sv.v/SD[k].mx*100))}%;background:${st==='crit'?'var(--red)':st==='warn'?'var(--yellow)':'var(--green)'}"></div></div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+  <div id="env-weather" style="display:none">
+    <div class="card card-md" style="margin-bottom:12px">
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        ${wth.fc.map(d=>`<div style="flex:1;min-width:100px;text-align:center;padding:10px;background:rgba(2,119,168,.05);border-radius:8px;border:1px solid var(--border)">
+          <div style="font-weight:700;color:var(--text)">${d.d}</div>
+          <div style="font-size:.75rem;color:var(--cyan);margin:4px 0">${ic('wind',12)}</div>
+          <div style="font-size:.8rem;color:var(--red);font-weight:600">${d.hi}°</div>
+          <div style="font-size:.72rem;color:var(--muted)">${d.lo}°</div>
+          <div style="font-size:.68rem;color:var(--muted);margin-top:3px">${d.ds}</div>
+          <div style="font-size:.68rem;color:var(--cyan)">${d.w} km/h</div>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+  setTimeout(()=>{
+    for(const[k,,col]of[['temp_outdoor','',''+ '#0ea5e9'],['wind_speed','','#6d28d9'],['humidity','','#059669'],['pressure','','#d97706']]){
+      lChart(el('cv-'+k),[{data:gH(stnId,k,48),color:k==='temp_outdoor'?'#0ea5e9':k==='wind_speed'?'#6d28d9':k==='humidity'?'#059669':'#d97706',fill:k==='temp_outdoor'?'rgba(14,165,233,.06)':'rgba(109,40,217,.06)'}]);
+    }
+  },50);
+}
+
+/* ── PERSONNEL ──────────────────────────────────────────────── */
+function rPersonnel(){
+  const pers=ST().personnel;
+  const inside=pers.filter(p=>p.loc==='inside').length;
+  const outside=pers.filter(p=>p.loc==='outside').length;
+  const safe=pers.filter(p=>p.safe).length;
+  const needsAttn=pers.filter(p=>p.wellness?.checkin==='Needs Attention').length;
+  const lowSun=pers.filter(p=>(p.wellness?.sunHrs??99)<1).length;
+  const longIndoor=pers.filter(p=>(p.wellness?.lastOutdoor??0)>=7).length;
+  const avgSun=(pers.reduce((acc,p)=>acc+(p.wellness?.sunHrs??0),0)/pers.length).toFixed(1);
+
+  el('pg-personnel').innerHTML=`
+  <div class="g4" style="margin-bottom:14px">
+    <div class="kpi"><div class="kpi-v">${pers.length}</div><div class="kpi-l">Total Personnel</div></div>
+    <div class="kpi"><div class="kpi-v" style="color:var(--green)">${inside}</div><div class="kpi-l">Inside Station</div></div>
+    <div class="kpi"><div class="kpi-v" style="color:var(--yellow)">${outside}</div><div class="kpi-l">Outside</div></div>
+    <div class="kpi"><div class="kpi-v" style="color:var(--green)">${safe}/${pers.length}</div><div class="kpi-l">Safe &amp; Accounted</div></div>
+  </div>
+
+  ${outside>0?`<div style="background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.3);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:.78rem;color:#92400e">${ic('alert',14)} <strong>${outside} personnel outside</strong> — Weather advisory: Wind ${fmt(ST().sensors.wind_speed?.v??0)} km/h | Temp ${fmt(ST().sensors.temp_outdoor?.v??0)}°C</div>`:''}
+
+  <!-- Station-Wide Crew Wellness & Polar Isolation Risk Summary Card -->
+  <div class="card card-md" style="margin-bottom:14px;border-left:4px solid var(--purple);background:rgba(109,40,217,.04)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div class="sec-hd" style="color:var(--purple);margin:0">${ic('activity',14)} Station-Wide Crew Wellness &amp; Polar Isolation Risk</div>
+      <span class="tag ${needsAttn>0?'tr':lowSun>0?'ty':'tg'}">${needsAttn>0?'ATTENTION REQUIRED':lowSun>0?'MONITORING ADVISED':'ALL NOMINAL'}</span>
+    </div>
+    <div style="font-size:.75rem;color:var(--muted);margin-bottom:10px;line-height:1.4">
+      Continuous polar night, extreme cold, and total confinement create serious operational risks in Antarctica (Seasonal Affective Disorder, circadian disruption, and cognitive fatigue). Weekly sunlight hours and outdoor activity are tracked to safeguard station mission readiness.
+    </div>
+    <div class="g4">
+      <div class="card-sm" style="text-align:center;background:rgba(255,255,255,.65)">
+        <div style="font-size:.64rem;color:var(--muted);font-weight:600">Low Sunlight (&lt;1h/wk)</div>
+        <div style="font-size:1.3rem;font-weight:800;color:${lowSun>0?'var(--yellow)':'var(--green)'};margin:2px 0">${lowSun} crew flagged</div>
+        <div style="font-size:.62rem;color:${lowSun>0?'var(--yellow)':'var(--dim)'}">${lowSun>0?'Light therapy required':'Sufficient'}</div>
+      </div>
+      <div class="card-sm" style="text-align:center;background:rgba(255,255,255,.65)">
+        <div style="font-size:.64rem;color:var(--muted);font-weight:600">No Outdoor Activity (7d+)</div>
+        <div style="font-size:1.3rem;font-weight:800;color:${longIndoor>0?'var(--orange)':'var(--green)'};margin:2px 0">${longIndoor} crew</div>
+        <div style="font-size:.62rem;color:${longIndoor>0?'var(--orange)':'var(--dim)'}">${longIndoor>0?'Mandatory outdoor rotation':'Regular exercise'}</div>
+      </div>
+      <div class="card-sm" style="text-align:center;background:rgba(255,255,255,.65)">
+        <div style="font-size:.64rem;color:var(--muted);font-weight:600">Self-Report Flags</div>
+        <div style="font-size:1.3rem;font-weight:800;color:${needsAttn>0?'var(--red)':'var(--green)'};margin:2px 0">${needsAttn} crew</div>
+        <div style="font-size:.62rem;color:${needsAttn>0?'var(--red)':'var(--dim)'}">${needsAttn>0?'Medical check initiated':'No concerns'}</div>
+      </div>
+      <div class="card-sm" style="text-align:center;background:rgba(255,255,255,.65)">
+        <div style="font-size:.64rem;color:var(--muted);font-weight:600">Station Avg Sunlight</div>
+        <div style="font-size:1.3rem;font-weight:800;color:var(--cyan);margin:2px 0">${avgSun} hrs</div>
+        <div style="font-size:.62rem;color:var(--dim)">Target &ge; 2.5 hrs/wk</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab act" onclick="sTab(this,'per-roster')">Personnel Roster (${pers.length})</button>
+    <button class="tab" onclick="sTab(this,'per-wellness')">Crew Wellness Tracker</button>
+    <button class="tab" onclick="sTab(this,'per-protocol')">Medical Protocol &amp; Treaty</button>
+  </div>
+
+  <div id="per-roster">
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
+      ${pers.map(p=>`<div class="card card-md" style="display:flex;gap:12px;align-items:flex-start">
+        <div style="width:36px;height:36px;background:${roleC(p.role)};border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:.9rem;flex-shrink:0">${p.name[0]}</div>
+        <div style="flex:1">
+          <div style="font-weight:700;color:var(--text)">${p.name}</div>
+          <div style="font-size:.72rem;color:var(--muted)">${(ROLES[p.role]||{}).label} | ${p.area}</div>
+          <div style="font-size:.72rem;color:var(--dim);margin-top:2px">${p.act}</div>
+          <div style="display:flex;gap:6px;margin-top:6px;align-items:center;flex-wrap:wrap">
+            <span class="tag ${p.loc==='inside'?'tg':'ty'}">${p.loc==='inside'?ic('check',10)+' Inside':ic('alert',10)+' Outside'}</span>
+            <span class="tag ${p.safe?'tg':'tr'}">${p.safe?'Safe':'Check'}</span>
+            ${p.wellness?`<span class="tag ${p.wellness.checkin==='Good'?'tg':p.wellness.checkin==='Fair'?'ty':'tr'}">${p.wellness.checkin}</span>`:''}
+            ${canDo('personnel.status')?`<button class="btn btn-ghost" style="padding:2px 7px;font-size:.65rem;margin-left:auto" onclick="togglePersonnelSafe('${p.id}')">Toggle Status</button>`:''}
+          </div>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>
+
+  <div id="per-wellness" style="display:none">
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
+      ${pers.map(p=>{
+        const w=p.wellness||{lastOutdoor:0,sunHrs:3,checkin:'Good'};
+        const cls=w.checkin==='Good'?'tg':w.checkin==='Fair'?'ty':'tr';
+        const bdrCol=w.checkin==='Good'?'var(--green)':w.checkin==='Fair'?'var(--yellow)':'var(--red)';
+        return`<div class="card card-md" style="border-left:3px solid ${bdrCol}">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <div style="width:28px;height:28px;background:${roleC(p.role)};border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:.78rem;flex-shrink:0">${p.name[0]}</div>
+            <div style="flex:1"><div style="font-weight:700;color:var(--text);font-size:.82rem">${p.name}</div><div style="font-size:.65rem;color:var(--muted)">${(ROLES[p.role]||{}).label}</div></div>
+            <span class="tag ${cls}" style="font-size:.65rem">${w.checkin}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:8px">
+            <div style="text-align:center;padding:6px;background:rgba(2,119,168,.05);border-radius:7px">
+              <div style="font-size:.6rem;color:var(--muted);margin-bottom:2px">Last Outdoor</div>
+              <div style="font-size:.95rem;font-weight:800;color:${w.lastOutdoor>=7?'var(--red)':w.lastOutdoor>=3?'var(--yellow)':'var(--green)'}">${w.lastOutdoor}d</div>
+              <div style="font-size:.58rem;color:var(--dim)">${w.lastOutdoor===0?'Today':w.lastOutdoor>=7?'LONG GAP':w.lastOutdoor>=3?'Moderate':'Recent'}</div>
+            </div>
+            <div style="text-align:center;padding:6px;background:rgba(2,119,168,.05);border-radius:7px">
+              <div style="font-size:.6rem;color:var(--muted);margin-bottom:2px">Sun Exposure</div>
+              <div style="font-size:.95rem;font-weight:800;color:${w.sunHrs<1?'var(--red)':w.sunHrs<2?'var(--yellow)':'var(--green)'}">${w.sunHrs}h</div>
+              <div style="font-size:.58rem;color:var(--dim)">${w.sunHrs>=3?'Good':w.sunHrs>=1?'Low':'CRITICAL'}</div>
+            </div>
+            <div style="text-align:center;padding:6px;background:rgba(2,119,168,.05);border-radius:7px">
+              <div style="font-size:.6rem;color:var(--muted);margin-bottom:2px">Self Check-in</div>
+              <div style="font-size:.72rem;font-weight:700;color:${w.checkin==='Good'?'var(--green)':w.checkin==='Fair'?'var(--yellow)':'var(--red)'};margin:2px 0">${w.checkin}</div>
+              <select style="font-size:.62rem;padding:2px 3px;width:100%;border:1px solid var(--border);border-radius:4px;background:rgba(255,255,255,.85)" onchange="updCheckin('${p.id}',this.value)">
+                <option ${w.checkin==='Good'?'selected':''}>Good</option>
+                <option ${w.checkin==='Fair'?'selected':''}>Fair</option>
+                <option ${w.checkin==='Needs Attention'?'selected':''}>Needs Attention</option>
+              </select>
+            </div>
+          </div>
+          ${w.checkin==='Needs Attention'?`<div style="padding:5px 8px;background:rgba(220,38,38,.07);border-radius:6px;font-size:.68rem;color:#991b1b">${ic('alert',11)} Medical officer notified — welfare check within 24h recommended.</div>`:''}
+          ${w.lastOutdoor>=7?`<div style="padding:5px 8px;background:rgba(217,119,6,.07);border-radius:6px;font-size:.68rem;color:#92400e;margin-top:4px">${ic('alert',11)} 7+ days without outdoor activity — light therapy session advised.</div>`:''}
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+
+  <div id="per-protocol" style="display:none">
+    <div class="card card-md">
+      <div class="sec-hd">${ic('activity',14)} Antarctic Winter Wellness — Clinical Context</div>
+      <div style="font-size:.8rem;color:var(--muted);line-height:1.8;max-width:680px">
+        <p style="margin-bottom:10px">During Antarctic winter-over periods, research station personnel face extreme environmental stressors: <strong>complete polar night</strong> (0 hours of sunlight for months), severe isolation with zero evacuation possibility, confined living quarters, and persistent disruption of circadian rhythms.</p>
+        <p style="margin-bottom:10px"><strong>Documented clinical and operational risks include:</strong><br>
+        &bull; Seasonal Affective Disorder (SAD) — documented in 40-60% of winter-over crew members<br>
+        &bull; Vitamin D depletion resulting in bone density reduction and lowered immunity<br>
+        &bull; Circadian desynchronization causing insomnia and reduced vigilance during critical tasks<br>
+        &bull; "Winter-over syndrome" — emotional lability, social friction, and cognitive slowing</p>
+        <p style="margin-bottom:10px"><strong>Treaty &amp; NCPOR Guidelines:</strong> In accordance with India's National Centre for Polar and Ocean Research operational standards and Antarctic Treaty Committee for Environmental Protection (CEP) guidance, station commanders are required to conduct regular psychological check-ins and ensure minimum outdoor movement.</p>
+        <p><strong>Action Thresholds:</strong><br>
+        &bull; Sunlight &lt;1h/week &rarr; Daily 30-min bright light therapy (10,000 lux)<br>
+        &bull; Indoor gap &ge;7 days &rarr; Mandatory station perimeter walk<br>
+        &bull; Check-in "Needs Attention" &rarr; Station Medical Officer review within 24 hours</p>
+      </div>
+    </div>
+  </div>`;
+}
+function togglePersonnelSafe(id){
+  const p=ST().personnel.find(x=>x.id===id);if(p){p.safe=!p.safe;rPersonnel();}
+}
+function updCheckin(id,val){
+  const p=ST().personnel.find(x=>x.id===id);
+  if(p){if(!p.wellness)p.wellness={lastOutdoor:0,sunHrs:3,checkin:'Good'};p.wellness.checkin=val;rPersonnel();toast('Wellness check-in updated for '+p.name.split(' ').pop()+'.','g');}
+}
+
+/* ── DIGITAL TWIN (ISOMETRIC) ───────────────────────────────── */
+const TWIN_TYPE_COLS={
+  power:   {top:'#f59e0b', left:'#d97706', right:'#b45309', label:'Power'},
+  comms:   {top:'#0284c7', left:'#0369a1', right:'#075985', label:'Comms'},
+  lab:     {top:'#059669', left:'#047857', right:'#065f46', label:'Laboratory'},
+  medical: {top:'#e11d48', left:'#be123c', right:'#9f1239', label:'Medical'},
+  habitat: {top:'#6366f1', left:'#4f46e5', right:'#3730a3', label:'Habitat & Ops'},
+  util:    {top:'#64748b', left:'#475569', right:'#334155', label:'Utility & Storage'}
+};
+
+const BLDGS_MAITRI=[
+  {id:'comm',nm:'VSAT Comms Tower',gx:0.8,gy:0.8,w:1.2,d:1.2,h:2.0,cat:'comms',sns:['battery_pct'],deps:[]},
+  {id:'ctrl',nm:'Control Room',    gx:2.8,gy:1.4,w:2.0,d:1.8,h:1.3,cat:'habitat',sns:['temp_indoor','co2','power_cons'],deps:[]},
+  {id:'powr',nm:'Power House',     gx:5.6,gy:1.2,w:2.4,d:2.0,h:1.5,cat:'power',sns:['power_gen','fuel_level','battery_pct'],deps:['ctrl','lab','med','util']},
+  {id:'util',nm:'Utility Block',   gx:8.4,gy:1.8,w:1.8,d:1.8,h:1.1,cat:'util',sns:['water_level','fuel_level'],deps:[]},
+  {id:'lab', nm:'Science Lab',     gx:1.8,gy:5.0,w:2.4,d:2.0,h:1.2,cat:'lab',sns:['co2','air_quality','temp_indoor'],deps:[]},
+  {id:'med', nm:'Medical Bay',     gx:5.2,gy:4.4,w:1.8,d:1.8,h:1.2,cat:'medical',sns:['temp_indoor','humidity'],deps:[]},
+  {id:'sola',nm:'Solar Array',     gx:7.8,gy:5.0,w:3.0,d:1.6,h:0.25,cat:'power',sns:['solar_gen'],deps:[]},
+  {id:'stor',nm:'Logistics Depot', gx:4.2,gy:7.4,w:2.2,d:1.8,h:1.0,cat:'util',sns:['water_level'],deps:[]},
+];
+
+const BLDGS_BHARATI=[
+  {id:'bcomm',nm:'VSAT Station Tower',gx:0.8,gy:0.8,w:1.2,d:1.2,h:2.0,cat:'comms',sns:['battery_pct'],deps:[]},
+  {id:'bctrl',nm:'Central Command',   gx:2.8,gy:1.6,w:2.2,d:2.0,h:1.4,cat:'habitat',sns:['temp_indoor','co2'],deps:[]},
+  {id:'bpowr',nm:'Main Powerhouse',   gx:5.6,gy:1.4,w:2.2,d:2.0,h:1.5,cat:'power',sns:['power_gen','fuel_level'],deps:['bctrl','blab','bmed']},
+  {id:'blab', nm:'Bio & Field Lab',   gx:1.8,gy:5.2,w:2.5,d:2.0,h:1.2,cat:'lab',sns:['co2','air_quality'],deps:[]},
+  {id:'bmed', nm:'Medical Bay',       gx:5.4,gy:4.6,w:1.8,d:1.8,h:1.2,cat:'medical',sns:['temp_indoor'],deps:[]},
+  {id:'bsola',nm:'Solar Farm',        gx:8.0,gy:4.6,w:3.2,d:1.6,h:0.25,cat:'power',sns:['solar_gen'],deps:[]},
+];
+
+let twinSelected=null;let twinCascade=[];
+function rTwin(){
+  el('pg-twin').innerHTML=`
+  <div style="display:flex;gap:14px;flex-wrap:wrap">
+    <div style="flex:1;min-width:320px">
+      <div class="card card-md" style="position:relative">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div class="sec-hd" style="margin:0">${ic('mountain',15)} ${ST().fullName} — Isometric Station Twin</div>
+          <span class="tag tg">${ic('activity',12)} 3D Geometric Model</span>
+        </div>
+        <div style="font-size:.82rem;color:var(--muted);margin-bottom:12px">Click any facility module to inspect live subsystem telemetry and simulate cascade failure propagation.</div>
+        <canvas id="twin-canvas" width="680" height="380" class="chart-cv"></canvas>
+        <div id="twin-popup" class="twin-info" style="display:none;position:absolute;top:80px;right:20px"></div>
+      </div>
+      <div class="card card-sm" style="margin-top:10px">
+        <div style="font-size:.74rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Building Types &amp; Status Legend</div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:.78rem;align-items:center">
+          <div style="display:flex;align-items:center;gap:5px"><span class="dot" style="background:#f59e0b"></span>Power</div>
+          <div style="display:flex;align-items:center;gap:5px"><span class="dot" style="background:#0284c7"></span>Comms</div>
+          <div style="display:flex;align-items:center;gap:5px"><span class="dot" style="background:#059669"></span>Laboratory</div>
+          <div style="display:flex;align-items:center;gap:5px"><span class="dot" style="background:#e11d48"></span>Medical</div>
+          <div style="display:flex;align-items:center;gap:5px"><span class="dot" style="background:#6366f1"></span>Habitat &amp; Ops</div>
+          <div style="display:flex;align-items:center;gap:5px"><span class="dot" style="background:#64748b"></span>Storage/Utility</div>
+          <span style="color:var(--border2);font-weight:bold">|</span>
+          <div style="display:flex;align-items:center;gap:5px"><span class="dot dg"></span>Online/OK</div>
+          <div style="display:flex;align-items:center;gap:5px"><span class="dot dy"></span>Warning</div>
+          <div style="display:flex;align-items:center;gap:5px"><span class="dot dr"></span>Critical</div>
+        </div>
+      </div>
+    </div>
+    <div style="width:280px;min-width:260px">
+      <div class="card card-md" id="twin-info-panel">
+        <div style="font-size:.84rem;color:var(--muted);text-align:center;padding:26px 0">${ic('map',28)}<br><br><strong>Select a facility module</strong><br><span style="font-size:.76rem">Click any building on the isometric grid to inspect connected sensors and operational status.</span></div>
+      </div>
+      <div class="card card-md" style="margin-top:12px">
+        <div class="sec-hd">${ic('alert',13)} Failure Simulation</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px;line-height:1.5">Select a building module then simulate power or structural failure to evaluate cascade dependencies:</div>
+        <button class="btn btn-y" style="width:100%;justify-content:center;font-size:.84rem" onclick="simCascade()">${ic('alert',13)} Simulate Failure Cascade</button>
+        <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:.84rem;margin-top:8px" onclick="clearCascade()">Clear Simulation</button>
+      </div>
+    </div>
+  </div>`;
+  twinSelected=null;twinCascade=[];
+  setTimeout(()=>drawIsoTwin(),50);
+}
+
+function isoProj(gx,gy,gz,scale,cx,cy){
+  const cos=Math.cos(Math.PI/6);const sin=Math.sin(Math.PI/6);
+  return{x:cx+(gx-gy)*scale*cos,y:cy+(gx+gy)*scale*sin-gz*scale*0.88};
+}
+
+function drawIsoTwin(){
+  const cv=el('twin-canvas');if(!cv)return;
+  const pw=cv.parentElement?cv.parentElement.clientWidth:0;
+  if(pw>80){
+    const tw=Math.round(cv.clientWidth||pw);
+    if(tw>100&&cv.width!==tw)cv.width=tw;
+  }
+  const ctx=cv.getContext('2d');const W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  const scale=Math.max(26,Math.min(38,Math.round(W*0.048)));
+  const cx=W*0.34;const cy=H*0.32;
+  const bldgs=APP.station==='maitri'?BLDGS_MAITRI:BLDGS_BHARATI;
+  const s=ST().sensors;
+
+  // Draw ground grid
+  ctx.strokeStyle='rgba(2,119,168,.10)';ctx.lineWidth=.6;
+  for(let i=0;i<=12;i++){
+    const p1=isoProj(i,0,0,scale,cx,cy);const p2=isoProj(i,11,0,scale,cx,cy);
+    ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();
+    const p3=isoProj(0,i,0,scale,cx,cy);const p4=isoProj(12,i,0,scale,cx,cy);
+    ctx.beginPath();ctx.moveTo(p3.x,p3.y);ctx.lineTo(p4.x,p4.y);ctx.stroke();
+  }
+
+  // Proper depth sorting: back-to-front by center coordinates (gx + w/2 + gy + d/2)
+  const sorted=[...bldgs].sort((a,b)=>((a.gx+a.w*0.5)+(a.gy+a.d*0.5))-((b.gx+b.w*0.5)+(b.gy+b.d*0.5)));
+
+  for(const bl of sorted){
+    const isSel=twinSelected===bl.id;
+    const isCasc=twinCascade.includes(bl.id);
+    let bStatus='online';
+    for(const sk of bl.sns){const sv=s[sk];if(sv?.st==='crit'){bStatus='critical';break;}if(sv?.st==='warn')bStatus='warning';}
+
+    const typeCol=TWIN_TYPE_COLS[bl.cat]||TWIN_TYPE_COLS.util;
+    let topCol,leftCol,rightCol;
+    if(isCasc){
+      topCol='rgba(220,38,38,.85)';leftCol='rgba(185,28,28,.82)';rightCol='rgba(153,27,27,.82)';
+    }else if(isSel){
+      topCol='rgba(2,119,168,.9)';leftCol='rgba(2,90,145,.85)';rightCol='rgba(3,105,161,.85)';
+    }else if(bStatus==='critical'){
+      topCol='rgba(220,38,38,.82)';leftCol='rgba(185,28,28,.78)';rightCol='rgba(153,27,27,.78)';
+    }else if(bStatus==='warning'){
+      topCol='rgba(217,119,6,.82)';leftCol='rgba(180,83,9,.78)';rightCol='rgba(146,64,14,.78)';
+    }else{
+      topCol=typeCol.top;leftCol=typeCol.left;rightCol=typeCol.right;
+    }
+
+    const{gx,gy,w,d,h}=bl;
+    const bl0=isoProj(gx,gy,0,scale,cx,cy);
+    const br0=isoProj(gx+w,gy,0,scale,cx,cy);
+    const fl0=isoProj(gx,gy+d,0,scale,cx,cy);
+    const fr0=isoProj(gx+w,gy+d,0,scale,cx,cy);
+    const bl1=isoProj(gx,gy,h,scale,cx,cy);
+    const br1=isoProj(gx+w,gy,h,scale,cx,cy);
+    const fl1=isoProj(gx,gy+d,h,scale,cx,cy);
+    const fr1=isoProj(gx+w,gy+d,h,scale,cx,cy);
+
+    // Left face
+    ctx.beginPath();ctx.moveTo(bl0.x,bl0.y);ctx.lineTo(bl1.x,bl1.y);ctx.lineTo(fl1.x,fl1.y);ctx.lineTo(fl0.x,fl0.y);ctx.closePath();
+    ctx.fillStyle=leftCol;ctx.fill();
+    ctx.strokeStyle=isSel?'var(--cyan)':'rgba(255,255,255,.3)';ctx.lineWidth=isSel?2:.6;ctx.stroke();
+
+    // Right face
+    ctx.beginPath();ctx.moveTo(br0.x,br0.y);ctx.lineTo(br1.x,br1.y);ctx.lineTo(fr1.x,fr1.y);ctx.lineTo(fr0.x,fr0.y);ctx.closePath();
+    ctx.fillStyle=rightCol;ctx.fill();
+    ctx.strokeStyle=isSel?'var(--cyan)':'rgba(255,255,255,.3)';ctx.lineWidth=isSel?2:.6;ctx.stroke();
+
+    // Top face
+    ctx.beginPath();ctx.moveTo(bl1.x,bl1.y);ctx.lineTo(br1.x,br1.y);ctx.lineTo(fr1.x,fr1.y);ctx.lineTo(fl1.x,fl1.y);ctx.closePath();
+    ctx.fillStyle=topCol;ctx.fill();
+    ctx.strokeStyle=isSel?'#fff':'rgba(255,255,255,.4)';ctx.lineWidth=isSel?2:.7;ctx.stroke();
+
+    // Specific detailing: solar panels cell pattern
+    if(bl.cat==='power'&&h<=0.3){
+      ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=.7;
+      for(let ci=1;ci<=3;ci++){
+        const sp1=isoProj(gx+w*(ci/4),gy,h,scale,cx,cy);
+        const sp2=isoProj(gx+w*(ci/4),gy+d,h,scale,cx,cy);
+        ctx.beginPath();ctx.moveTo(sp1.x,sp1.y);ctx.lineTo(sp2.x,sp2.y);ctx.stroke();
+      }
+    }
+
+    // Specific detailing: VSAT Comms Tower mast & antenna dish
+    if(bl.cat==='comms'){
+      const topC=isoProj(gx+w/2,gy+d/2,h,scale,cx,cy);
+      const mastTip=isoProj(gx+w/2,gy+d/2,h+0.45,scale,cx,cy);
+      ctx.strokeStyle='#0277a8';ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(topC.x,topC.y);ctx.lineTo(mastTip.x,mastTip.y);ctx.stroke();
+      ctx.beginPath();ctx.arc(mastTip.x,mastTip.y-3,7,-Math.PI*0.85,Math.PI*0.15);
+      ctx.strokeStyle='#0277a8';ctx.lineWidth=2.5;ctx.stroke();
+      ctx.beginPath();ctx.moveTo(mastTip.x-1,mastTip.y-3);ctx.lineTo(mastTip.x+3,mastTip.y-7);
+      ctx.strokeStyle='#d97706';ctx.lineWidth=1.5;ctx.stroke();
+    }
+
+    // Status beacon halo & dot on roof
+    const dotPt=isoProj(gx+w/2,gy+d/2,h,scale,cx,cy);
+    ctx.beginPath();ctx.arc(dotPt.x,dotPt.y-4,6,0,6.28);
+    ctx.fillStyle=bStatus==='critical'||isCasc?'rgba(220,38,38,.3)':bStatus==='warning'?'rgba(217,119,6,.3)':'rgba(5,150,105,.3)';
+    ctx.fill();
+    ctx.beginPath();ctx.arc(dotPt.x,dotPt.y-4,3,0,6.28);
+    ctx.fillStyle=bStatus==='critical'||isCasc?'#dc2626':bStatus==='warning'?'#d97706':'#059669';
+    ctx.fill();
+
+    // Floating full label pill (NO TRUNCATION!)
+    const labelPt=isoProj(gx+w/2,gy+d/2,h+0.35,scale,cx,cy);
+    ctx.font='bold 11px system-ui';
+    const textW=ctx.measureText(bl.nm).width;
+    const pillW=textW+24;
+    const pillH=20;
+    const pillX=labelPt.x-pillW/2;
+    const pillY=labelPt.y-pillH-4;
+
+    ctx.save();
+    ctx.shadowColor='rgba(2,119,168,.16)';ctx.shadowBlur=6;ctx.shadowOffsetY=2;
+    ctx.fillStyle=isSel?'rgba(255,255,255,0.98)':'rgba(255,255,255,0.92)';
+    ctx.strokeStyle=isSel?'var(--cyan)':isCasc?'#dc2626':bStatus==='critical'?'#dc2626':bStatus==='warning'?'#d97706':'rgba(144,204,232,0.85)';
+    ctx.lineWidth=isSel?2:1;
+    // draw pill
+    const pr=10;
+    ctx.beginPath();
+    ctx.moveTo(pillX+pr,pillY);ctx.lineTo(pillX+pillW-pr,pillY);
+    ctx.arcTo(pillX+pillW,pillY,pillX+pillW,pillY+pillH,pr);
+    ctx.lineTo(pillX+pillW,pillY+pillH-pr);
+    ctx.arcTo(pillX+pillW,pillY+pillH,pillX+pillW-pr,pillY+pillH,pr);
+    ctx.lineTo(pillX+pr,pillY+pillH);
+    ctx.arcTo(pillX,pillY+pillH,pillX,pillY+pillH-pr,pr);
+    ctx.lineTo(pillX,pillY+pr);
+    ctx.arcTo(pillX,pillY,pillX+pr,pillY,pr);
+    ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.restore();
+
+    // Dot inside pill
+    ctx.beginPath();ctx.arc(pillX+9,pillY+pillH/2,3.5,0,6.28);
+    ctx.fillStyle=bStatus==='critical'||isCasc?'#dc2626':bStatus==='warning'?'#d97706':'#059669';ctx.fill();
+
+    // Full building name text
+    ctx.fillStyle='#0c1f35';ctx.font='bold 11px system-ui';ctx.textAlign='left';ctx.textBaseline='middle';
+    ctx.fillText(bl.nm,pillX+17,pillY+pillH/2);
+  }
+
+  // Interactive Click selection (front-to-back testing)
+  cv.onclick=e=>{
+    const rect=cv.getBoundingClientRect();const mx=e.clientX-rect.left;const my=e.clientY-rect.top;
+    for(const bl of [...sorted].reverse()){
+      const{gx,gy,w,d,h}=bl;
+      const c=isoProj(gx+w/2,gy+d/2,h/2,scale,cx,cy);
+      if(Math.abs(mx-c.x)<scale*w*0.75&&Math.abs(my-c.y)<scale*h*0.85){
+        twinSelected=bl.id;twinCascade=[];drawIsoTwin();showBldgInfo(bl);return;
+      }
+    }
+    twinSelected=null;twinCascade=[];drawIsoTwin();el('twin-popup').style.display='none';
+    el('twin-info-panel').innerHTML=`<div style="font-size:.84rem;color:var(--muted);text-align:center;padding:26px 0">${ic('map',28)}<br><br><strong>Select a facility module</strong><br><span style="font-size:.76rem">Click any building on the isometric grid to inspect connected sensors and operational status.</span></div>`;
+  };
+}
+
+function showBldgInfo(bl){
+  const s=ST().sensors;
+  const popup=el('twin-popup');
+  const panel=el('twin-info-panel');
+  const sensorHTML=bl.sns.map(k=>{
+    const sv=s[k];if(!sv)return'';
+    const st=sv.st;
+    return`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:.72rem">
+      <span style="color:var(--muted)">${SD[k].lbl}</span>
+      <span style="font-weight:700;color:${st==='crit'?'var(--red)':st==='warn'?'var(--yellow)':'var(--text)'}">${fmt(sv.v)} ${sv.u}</span>
+    </div>`;
+  }).join('');
+  if(popup)popup.style.display='none';
+  if(panel)panel.innerHTML=`
+    <div class="sec-hd" style="margin-bottom:8px">${ic('map',13)} ${bl.nm}</div>
+    <span class="tag ${bl.cat==='power'?'tb':bl.cat==='sci'?'tg':bl.cat==='comms'?'tp':'tG'}" style="margin-bottom:10px">${bl.cat.toUpperCase()}</span>
+    <div style="margin:10px 0">${sensorHTML}</div>
+    ${bl.deps.length?`<div style="margin-top:8px;font-size:.72rem;color:var(--muted)"><strong>Cascade dependencies:</strong> ${bl.deps.map(d=>{const b=([...BLDGS_MAITRI,...BLDGS_BHARATI]).find(x=>x.id===d);return b?.nm||d;}).join(', ')}</div>`:''}
+  `;
+}
+
+function simCascade(){
+  if(!twinSelected){toast('Select a building first.','y');return;}
+  const bldgs=APP.station==='maitri'?BLDGS_MAITRI:BLDGS_BHARATI;
+  const bl=bldgs.find(b=>b.id===twinSelected);if(!bl)return;
+  twinCascade=bl.deps||[];
+  drawIsoTwin();
+  if(twinCascade.length){toast(`Failure cascade: ${twinCascade.length} buildings affected if ${bl.nm} fails.`,'r');}
+  else{toast(`${bl.nm} has no downstream dependencies in simulation.`,'b');}
+}
+function clearCascade(){twinCascade=[];drawIsoTwin();toast('Simulation cleared.','g');}
+
+/* ── CONNECTIVITY ───────────────────────────────────────────── */
+function rConnectivity(){
+  const qlen=CONN.queue.length;
+  const qkb=(CONN.queue.reduce((s,x)=>s+(x.kb||0),0)).toFixed(1);
+  const lastSyncStr=CONN.lastSync?ago(CONN.lastSync.toISOString()):'Never';
+  el('pg-connectivity').innerHTML=`
+  <div style="background:rgba(2,119,168,.06);border:1px solid rgba(2,119,168,.2);border-radius:12px;padding:14px 16px;margin-bottom:14px">
+    <div style="font-weight:700;color:var(--cyan);margin-bottom:6px;display:flex;align-items:center;gap:8px">${ic('satellite',16)} Why Connectivity Matters in Antarctica</div>
+    <div style="font-size:.78rem;color:var(--muted);line-height:1.7">
+      Indian Antarctic stations (Maitri &amp; Bharati) rely on <strong>intermittent VSAT satellite links</strong> operating at 512 kbps–2 Mbps, with daily outages of 2–8 hours due to satellite pass windows and polar geometry. This platform implements a <strong>store-and-forward architecture</strong>: sensor readings generated during link outages are queued locally in the browser/device, then automatically uploaded to HQ when the link is restored — ensuring <strong>zero data loss</strong> even under unreliable connectivity.
+    </div>
+  </div>
+
+  <!-- Manual Connectivity Outage & Restoration Controls -->
+  <div class="card card-md" style="margin-bottom:14px;background:rgba(255,255,255,.75)">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div>
+        <div class="sec-hd" style="margin:0">${ic('activity',14)} Connectivity Simulation Controls</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:2px">Simulate satellite link dropouts to test offline banners, local telemetry queueing, and store-and-forward sync.</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-r" onclick="manualSimDrop()">${ic('wifioff',14)} Simulate Link Outage</button>
+        <button class="btn btn-g" onclick="manualRestoreLink()">${ic('refresh',14)} Restore Link</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="g4" style="margin-bottom:14px">
+    <div class="kpi">
+      <div style="font-size:.68rem;color:var(--muted);margin-bottom:6px">Link Status</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="dot ${CONN.status==='online'?'dg':CONN.status==='offline'?'dr':'dy'}" style="width:12px;height:12px;animation:${CONN.status!=='online'?'bl 1s infinite':'none'}"></span>
+        <div style="font-size:1.1rem;font-weight:800;color:${CONN.status==='online'?'var(--green)':CONN.status==='offline'?'var(--red)':'var(--yellow)'}">${CONN.status.toUpperCase()}</div>
+      </div>
+    </div>
+    <div class="kpi"><div class="kpi-v" style="font-size:1rem">${lastSyncStr}</div><div class="kpi-l">Last HQ Sync</div></div>
+    <div class="kpi"><div class="kpi-v" id="conn-live-qlen" style="color:${qlen>0?'var(--yellow)':'var(--green)'}">${qlen}</div><div class="kpi-l">Queued Readings</div><div class="kpi-sub" id="conn-live-qkb">${qkb} KB pending</div></div>
+    <div class="kpi"><div class="kpi-v">${CONN.bandwidth==='full'?'Full (2 Mbps)':CONN.bandwidth==='limited'?'Limited (512 kbps)':'No Link'}</div><div class="kpi-l">Bandwidth Mode</div></div>
+  </div>
+
+  ${CONN.status==='offline'?`
+  <div style="background:rgba(220,38,38,.08);border:2px solid rgba(220,38,38,.3);border-radius:10px;padding:14px;margin-bottom:14px">
+    <div style="font-weight:700;color:var(--red);margin-bottom:6px">${ic('wifioff',14)} SATELLITE LINK OFFLINE — Last Known State</div>
+    <div style="font-size:.78rem;color:var(--muted)">The platform is operating on the most recent sensor data received before the link dropped. New readings are being queued locally and will sync automatically when the link is restored.</div>
+    <div style="margin-top:10px;display:flex;gap:12px;font-size:.8rem;flex-wrap:wrap">
+      <div><strong style="color:var(--red)" id="conn-off-qlen">${qlen}</strong> readings queued</div>
+      <div><strong id="conn-off-qkb">${qkb} KB</strong> pending upload</div>
+      <div id="conn-off-sens">Estimated readings: ~${Math.round(qlen*Object.keys(SD).length)} sensor values</div>
+    </div>
+  </div>`:''}
+
+  ${CONN.status==='syncing'?`
+  <div style="background:rgba(217,119,6,.07);border:1px solid rgba(217,119,6,.3);border-radius:10px;padding:14px;margin-bottom:14px">
+    <div style="font-weight:700;color:var(--yellow);margin-bottom:8px">${ic('refresh',14)} Syncing Queued Data...</div>
+    <div class="prog" style="height:10px;margin-bottom:6px"><div class="prog-fill" style="width:${CONN.syncProgress}%;background:var(--yellow)"></div></div>
+    <div style="font-size:.78rem;color:var(--muted)">${CONN.syncProgress}% complete — ${CONN.queue.length} readings remaining</div>
+  </div>`:''}
+
+  <div class="card card-md">
+    <div class="sec-hd">${ic('activity',14)} Connection Event Log</div>
+    <table class="tbl">
+      <thead><tr><th>Timestamp</th><th>Event</th><th>Type</th></tr></thead>
+      <tbody>
+        ${CONN.history.map(h=>`<tr>
+          <td style="font-family:monospace;font-size:.72rem">${new Date(h.ts).toLocaleTimeString('en-IN')}</td>
+          <td style="font-size:.78rem">${h.event}</td>
+          <td><span class="tag ${h.type==='drop'?'tr':h.type==='restore'?'tb':'tg'}">${h.type.toUpperCase()}</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card card-md" style="margin-top:14px">
+    <div class="sec-hd">${ic('satellite',14)} VSAT Link Specifications</div>
+    <div class="g3">
+      ${[{lbl:'Normal Bandwidth',v:'2 Mbps down / 512 kbps up'},{lbl:'Outage Pattern',v:'2–8 hrs/day (satellite geometry)'},{lbl:'Sync Frequency',v:'Every 5 seconds (when online)'},{lbl:'Queue Strategy',v:'FIFO — oldest readings uploaded first'},{lbl:'Data Format',v:`JSON sensor batch (${Object.keys(SD).length} sensors)`},{lbl:'Recovery',v:'Automatic — no operator action needed'}].map(x=>`<div class="card-sm"><div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;font-weight:700;margin-bottom:3px">${x.lbl}</div><div style="font-size:.78rem;color:var(--text);font-weight:600">${x.v}</div></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+/* ── ALERTS ─────────────────────────────────────────────────── */
+function rAlerts(){
+  const alerts=ST().alerts;
+  const activ=alerts.filter(a=>a.status==='active').length;
+  el('pg-alerts').innerHTML=`
+  <div class="g4" style="margin-bottom:14px">
+    <div class="kpi"><div class="kpi-v">${alerts.length}</div><div class="kpi-l">Total Alerts</div></div>
+    <div class="kpi"><div class="kpi-v" style="color:var(--red)">${activ}</div><div class="kpi-l">Active</div></div>
+    <div class="kpi"><div class="kpi-v" style="color:var(--red)">${alerts.filter(a=>a.level==='critical'&&a.status==='active').length}</div><div class="kpi-l">Critical</div></div>
+    <div class="kpi"><div class="kpi-v" style="color:var(--green)">${alerts.filter(a=>a.status!=='active').length}</div><div class="kpi-l">Resolved</div></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+    <div style="position:relative;flex:1">${ic('search',14)} <input id="al-q" placeholder="Search alerts..." oninput="fAlerts(this.value)" style="width:100%;padding-left:24px"></div>
+    <button class="btn btn-g" onclick="ackAll()">${ic('check',14)} Acknowledge All</button>
+    <button class="btn btn-ghost" onclick="testAlert()">${ic('alert',14)} Test Alert</button>
+  </div>
+  <div id="al-list">
+    ${alerts.map(a=>aCard(a)).join('')||'<div style="text-align:center;color:var(--muted);padding:30px">No alerts</div>'}
+  </div>`;
+}
+function aCard(a){return`<div class="al-card ${a.level}" id="al-${a.id}">
+  <div style="flex:1">
+    <div style="display:flex;gap:6px;margin-bottom:4px;align-items:center">
+      <span class="tag ${lcls(a.level)}">${a.level.toUpperCase()}</span>
+      <span class="tag ${a.status==='active'?'ty':'tg'}">${a.status.toUpperCase()}</span>
+      <span style="font-size:.68rem;color:var(--muted);margin-left:auto">${ago(a.ts)}</span>
+    </div>
+    <div style="font-weight:700;color:var(--text)">${a.title}</div>
+    <div style="font-size:.75rem;color:var(--muted);margin-top:2px">${a.msg}</div>
+    <div style="font-size:.72rem;color:var(--dim);margin-top:3px">${ic('map',10)} ${a.loc||''} ${a.action?'| Action: '+a.action:''}</div>
+  </div>
+  ${a.status==='active'&&canDo('alert.ack')?`<div style="display:flex;flex-direction:column;gap:4px">
+    <button class="btn btn-g" style="font-size:.7rem;padding:4px 8px" onclick="ackA('${a.id}')">Ack</button>
+    <button class="btn btn-ghost" style="font-size:.7rem;padding:4px 8px" onclick="resA('${a.id}')">Resolve</button>
+  </div>`:''}
+</div>`;}
+function fAlerts(q){const list=el('al-list');if(!list)return;const filtered=ST().alerts.filter(a=>!q||a.title.toLowerCase().includes(q.toLowerCase())||a.msg.toLowerCase().includes(q.toLowerCase()));list.innerHTML=filtered.map(a=>aCard(a)).join('')||'<div style="text-align:center;color:var(--muted);padding:20px">No matches</div>';}
+function ackA(id){const a=ST().alerts.find(x=>x.id===id);if(a){a.status='acknowledged';rAlerts();updBadge();}}
+function resA(id){const a=ST().alerts.find(x=>x.id===id);if(a){a.status='resolved';rAlerts();updBadge();}}
+function ackAll(){ST().alerts.forEach(a=>{if(a.status==='active')a.status='acknowledged';});rAlerts();updBadge();toast('All alerts acknowledged.','g');}
+function testAlert(){mkAlert({title:'System Test Alert',msg:'This is a test alert — all systems nominal.',level:'warning',loc:'Control Room',action:'No action required.'});rAlerts();}
+
+/* ── EMERGENCY ──────────────────────────────────────────────── */
+function rEmerg(){
+  const stn=ST();const pers=stn.personnel;
+  const isSOSActive=stn.alerts.some(a=>a.title.includes('SOS')&&a.status==='active');
+  const safeCount=pers.filter(p=>p.safe).length;
+  const outCount=pers.filter(p=>p.loc==='outside').length;
+
+  el('pg-emergency').innerHTML=`
+  <div class="g4" style="margin-bottom:14px">
+    <div class="kpi">
+      <div style="font-size:.76rem;color:var(--muted);text-transform:uppercase;font-weight:700;margin-bottom:4px">Station Alarm State</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="dot ${isSOSActive?'dr':'dg'}" style="width:12px;height:12px;animation:${isSOSActive?'bl 0.8s infinite':'none'}"></span>
+        <div style="font-size:1.15rem;font-weight:800;color:${isSOSActive?'var(--red)':'var(--green)'}">${isSOSActive?'CRITICAL SOS ACTIVE':'ALL NOMINAL'}</div>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-v" style="color:var(--green)">${safeCount}/${pers.length}</div>
+      <div class="kpi-l">Personnel Accounted</div>
+      <div class="kpi-sub">${outCount>0?`<span style="color:var(--yellow)">${outCount} in field — recall advised</span>`:'All crew sheltered inside'}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-v" style="color:var(--cyan)">72 Hours</div>
+      <div class="kpi-l">Life Support Autonomy</div>
+      <div class="kpi-sub">Thermal insulation &amp; O₂ buffer</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-v" style="color:var(--cyan)">STANDBY</div>
+      <div class="kpi-l">Emergency Generation</div>
+      <div class="kpi-sub">Auxiliary Gen #2 auto-engage</div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:14px;flex-wrap:wrap">
+    <div style="flex:1;min-width:320px">
+      <div class="card card-md" style="background:rgba(220,38,38,.06);border-color:rgba(220,38,38,.35);margin-bottom:14px">
+        <div style="text-align:center;padding:12px 0 8px">
+          <button onclick="doSOS()" style="width:130px;height:130px;border-radius:50%;background:var(--red);border:5px solid rgba(220,38,38,.45);color:#fff;font-size:1rem;font-weight:800;cursor:pointer;box-shadow:0 0 0 10px rgba(220,38,38,.16);transition:transform .12s,box-shadow .12s" onmousedown="this.style.transform='scale(.95)'" onmouseup="this.style.transform='scale(1)'">
+            ${ic('siren',32)}<br>SOS<br><span style="font-size:.7rem;letter-spacing:.05em">STATION EMERGENCY</span>
+          </button>
+        </div>
+        <div style="font-size:.82rem;color:var(--muted);text-align:center;max-width:360px;margin:0 auto">
+          Activates full station emergency protocol, sounds polar alarm sirens, broadcasts Iridium satellite distress signal, and alerts HQ Operations.
+        </div>
+      </div>
+
+      <div class="card card-md" style="margin-bottom:14px">
+        <div class="sec-hd">${ic('alert',14)} Quick Emergency Alert Protocols</div>
+        <div class="g2">
+          ${[
+            {t:'Fire / Smoke Hazard',ic:'alert',e:'fire'},
+            {t:'Medical Emergency',ic:'users',e:'medical'},
+            {t:'Extreme Blizzard Recall',ic:'wind',e:'bliz'},
+            {t:'Power System Failure',ic:'bolt',e:'power'},
+            {t:'CO / Toxic Gas Leak',ic:'activity',e:'gas'},
+            {t:'Satellite Comms Blackout',ic:'satellite',e:'comms'}
+          ].map(x=>`<button onclick="doEmerg('${x.e}')" class="btn btn-r" style="justify-content:center;padding:10px 12px;font-size:.84rem">${ic(x.ic,15)} ${x.t}</button>`).join('')}
+        </div>
+      </div>
+
+      <div class="card card-md">
+        <div class="sec-hd">${ic('satellite',14)} Emergency Communications Matrix</div>
+        <table class="tbl">
+          <thead><tr><th>Channel / System</th><th>Frequency / Target</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td style="font-weight:600">VHF Marine / Field Guard</td><td>Channel 16 (156.800 MHz)</td><td><span class="tag tg">ACTIVE</span></td></tr>
+            <tr><td style="font-weight:600">Polar Beacon SOS Relay</td><td>COSPAS-SARSAT 406 MHz</td><td><span class="tag tg">ARMED</span></td></tr>
+            <tr><td style="font-weight:600">HQ Goa Direct Hotline</td><td>Iridium Satellite Direct SBD</td><td><span class="tag tg">CONNECTED</span></td></tr>
+            <tr><td style="font-weight:600">Internal Station PA</td><td>All Modules &amp; Quarters</td><td><span class="tag tg">TESTED</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="flex:1.2;min-width:360px">
+      <div class="card card-md" style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div class="sec-hd" style="margin:0">${ic('map',15)} Station Evacuation Protocol &amp; Corridors</div>
+          <span class="tag tg">${ic('check',11)} Escape Routes Nominal</span>
+        </div>
+        <div style="font-size:.82rem;color:var(--muted);margin-bottom:10px">
+          Primary evacuation: <strong>Exit A (North) &rarr; Muster Point Alpha</strong> (Heated Shelter, 45m).<br>
+          Secondary evacuation: <strong>Exit B (East) &rarr; Muster Point Bravo</strong> (Logistics Bunker, 65m).
+        </div>
+        <canvas id="cv-evac" height="320" class="chart-cv"></canvas>
+      </div>
+
+      <div class="card card-md">
+        <div class="sec-hd">${ic('check',14)} Emergency Readiness Checklist</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          ${[
+            ['Primary evacuation routes unblocked','check'],
+            ['Emergency satellite comms operational','check'],
+            ['Medical trauma bay oxygen verified','check'],
+            ['Backup diesel generator automated','check'],
+            ['All 24 personnel accounted & safe','check'],
+            ['HQ Operations 24/7 link confirmed','check'],
+            ['Perimeter survival ropes secured','check'],
+            ['Hazardous chemical lock active','check']
+          ].map(([t,ic2])=>`<div style="display:flex;gap:8px;align-items:center;padding:6px 8px;background:rgba(255,255,255,.6);border:1px solid var(--border);border-radius:6px;font-size:.82rem"><span style="color:var(--green)">${ic(ic2,13)}</span>${t}</div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+  setTimeout(()=>drawEvac(el('cv-evac')),50);
+}
+
+function doSOS(){
+  mkAlert({title:'SOS — Full Station Emergency',msg:'Emergency SOS activated. HQ Operations Center notified. All personnel to emergency stations.',level:'critical',loc:'All Areas',action:'Follow emergency protocol immediately.'});
+  toast('SOS Activated. HQ Operations Center alerted.','r');beep(880);
+  rEmerg();
+}
+
+function doEmerg(t){
+  const map={
+    fire:{title:'Fire / Smoke Hazard Alert',msg:'Fire suppression systems primed. All personnel to muster stations.',loc:'Station Wing'},
+    medical:{title:'Medical Emergency Protocol',msg:'Trauma team dispatched. Medical officer on emergency call.',loc:'Medical Bay'},
+    bliz:{title:'Extreme Blizzard Emergency Recall',msg:'Blizzard winds exceed safe threshold. All outdoor personnel recalled.',loc:'Station Perimeter'},
+    power:{title:'Main Power Failure Alert',msg:'Primary generator offline. Auxiliary power bank engaged.',loc:'Power House'},
+    gas:{title:'Toxic Gas / CO Advisory',msg:'Elevated CO/gas detected. Ventilation isolation initiated.',loc:'Engineering Block'},
+    comms:{title:'Satellite Comms Blackout',msg:'Primary VSAT down. Secondary HF/VHF emergency beacon armed.',loc:'Comms Mast'}
+  };
+  const d=map[t]||{title:'Emergency Alert Activated',msg:'Emergency protocol engaged.',loc:'Station'};
+  mkAlert({...d,level:'critical',action:'Follow station emergency manual.'});
+  toast(d.title,'r');beep(880);
+  rEmerg();
+}
+
+function drawEvac(cv){
+  if(!cv)return;
+  const pw=cv.parentElement?cv.parentElement.clientWidth:0;
+  if(pw>80){
+    const tw=Math.round(cv.clientWidth||pw);
+    if(tw>100&&cv.width!==tw)cv.width=tw;
+  }
+  const ctx=cv.getContext('2d');const W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+
+  // Background polar grid
+  ctx.fillStyle='rgba(240,249,255,.96)';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(2,119,168,.08)';ctx.lineWidth=1;
+  const gs=28;
+  for(let x=0;x<W;x+=gs){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=gs){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+  // Station architectural layout boundaries (Central hub + 4 wings)
+  const cx=W*0.48, cy=H*0.52;
+  const rw=Math.min(W*0.45,210), rh=Math.min(H*0.45,140);
+  const left=cx-rw/2, top=cy-rh/2;
+
+  // Station ground pad
+  ctx.fillStyle='rgba(2,119,168,.07)';ctx.strokeStyle='rgba(2,119,168,.3)';ctx.lineWidth=1.5;
+  ctx.beginPath();
+  ctx.roundRect(left-10,top-10,rw+20,rh+20,12);
+  ctx.fill();ctx.stroke();
+
+  // Rooms / Modules
+  const rooms=[
+    {name:'Crew Habitat & Mess', x:left, y:top, w:rw*0.48, h:rh*0.48, col:'#6366f1'},
+    {name:'Central Command', x:left+rw*0.52, y:top, w:rw*0.48, h:rh*0.48, col:'#0284c7'},
+    {name:'Power & Engineering', x:left, y:top+rh*0.52, w:rw*0.48, h:rh*0.48, col:'#f59e0b'},
+    {name:'Medical & Science Lab', x:left+rw*0.52, y:top+rh*0.52, w:rw*0.48, h:rh*0.48, col:'#059669'}
+  ];
+
+  rooms.forEach(r=>{
+    ctx.fillStyle='rgba(255,255,255,.9)';ctx.strokeStyle=r.col;ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.roundRect(r.x,r.y,r.w,r.h,6);ctx.fill();ctx.stroke();
+
+    ctx.fillStyle=r.col;ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(r.name, r.x+r.w/2, r.y+r.h/2);
+
+    // Safety gear markers
+    ctx.font='9px system-ui';ctx.fillStyle='#dc2626';
+    ctx.fillText('[FE]', r.x+16, r.y+14);
+    ctx.fillStyle='#059669';
+    ctx.fillText('[+]', r.x+r.w-16, r.y+14);
+  });
+
+  // Central corridor cross
+  ctx.strokeStyle='rgba(2,119,168,.25)';ctx.lineWidth=10;
+  ctx.beginPath();ctx.moveTo(left, cy);ctx.lineTo(left+rw, cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx, top);ctx.lineTo(cx, top+rh);ctx.stroke();
+
+  // Exits (Doors)
+  const exits=[
+    {name:'EXIT A (North)', x:cx, y:top-10, align:'center', target:{x:cx, y:36}, color:'#059669'},
+    {name:'EXIT B (East)', x:left+rw+10, y:cy, align:'left', target:{x:W-44, y:cy}, color:'#d97706'},
+    {name:'EXIT C (South)', x:cx, y:top+rh+10, align:'center', target:{x:cx, y:H-30}, color:'#0284c7'}
+  ];
+
+  exits.forEach(ex=>{
+    // Door pill
+    ctx.fillStyle='#dc2626';ctx.beginPath();
+    ctx.roundRect(ex.x-18, ex.y-7, 36, 14, 4);ctx.fill();
+    ctx.fillStyle='#fff';ctx.font='bold 8px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('EXIT', ex.x, ex.y);
+
+    // Escape routes with dashed green/amber line and arrows
+    ctx.strokeStyle=ex.color;ctx.lineWidth=2.5;ctx.setLineDash([5,4]);
+    ctx.beginPath();ctx.moveTo(ex.x, ex.y);ctx.lineTo(ex.target.x, ex.target.y);ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  // Assembly Point Alpha (North Heated Emergency Shelter)
+  const apx=cx, apy=36;
+  ctx.beginPath();ctx.arc(apx, apy, 18, 0, Math.PI*2);
+  ctx.fillStyle='rgba(5,150,105,.18)';ctx.fill();
+  ctx.strokeStyle='#059669';ctx.lineWidth=2;ctx.stroke();
+  ctx.beginPath();ctx.arc(apx, apy, 4, 0, Math.PI*2);ctx.fillStyle='#059669';ctx.fill();
+  ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillStyle='#065f46';
+  ctx.fillText('MUSTER POINT ALPHA (North Heated Bunker — 45m)', apx, apy+22);
+
+  // Assembly Point Bravo (East Logistics Shelter)
+  const bpx=Math.min(W-40, cx+rw/2+80), bpy=cy;
+  ctx.beginPath();ctx.arc(bpx, bpy, 18, 0, Math.PI*2);
+  ctx.fillStyle='rgba(217,119,6,.18)';ctx.fill();
+  ctx.strokeStyle='#d97706';ctx.lineWidth=2;ctx.stroke();
+  ctx.beginPath();ctx.arc(bpx, bpy, 4, 0, Math.PI*2);ctx.fillStyle='#d97706';ctx.fill();
+  ctx.font='bold 10px system-ui';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillStyle='#92400e';
+  ctx.fillText('MUSTER POINT BRAVO (65m)', bpx, bpy+22);
+
+  // Cardinal orientation (Compass rose in top-right)
+  const cpx=Math.max(W-45, 45), cpy=42;
+  ctx.beginPath();ctx.arc(cpx, cpy, 16, 0, Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,.9)';ctx.fill();ctx.strokeStyle='var(--border)';ctx.lineWidth=1;ctx.stroke();
+  ctx.fillStyle='#dc2626';ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('N', cpx, cpy-5);
+  ctx.beginPath();ctx.moveTo(cpx, cpy+2);ctx.lineTo(cpx-4, cpy+8);ctx.lineTo(cpx+4, cpy+8);ctx.closePath();
+  ctx.fillStyle='var(--muted)';ctx.fill();
+
+  // Bottom Legend
+  ctx.fillStyle='#0c1f35';ctx.font='600 11px system-ui';ctx.textAlign='left';ctx.textBaseline='bottom';
+  ctx.fillText('Legend:  ── Primary Route (Alpha)   ── Secondary Route (Bravo)   [FE] Fire Extinguisher   [+] First Aid Kit', 16, H-8);
+}
+
+/* ── SIMULATIONS ────────────────────────────────────────────── */
+function rSim(){
+  el('pg-simulation').innerHTML=`
+  <div style="margin-bottom:12px;font-size:.78rem;color:var(--muted)">Run what-if simulations to test station response to emergencies. These scenarios do not affect live sensor data.</div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px" id="sim-cards">
+    ${SCEN.map(s=>`<div class="card card-md">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div style="width:36px;height:36px;border-radius:8px;background:${s.rk==='critical'?'rgba(220,38,38,.1)':'rgba(217,119,6,.1)'};display:grid;place-items:center;flex-shrink:0;color:${s.rk==='critical'?'var(--red)':'var(--yellow)'}">${ic(s.ico,18)}</div>
+        <div style="flex:1">
+          <div style="font-weight:700;color:var(--text);margin-bottom:3px">${s.nm}</div>
+          <span class="tag ${s.rk==='critical'?'tr':'ty'}">${s.rk.toUpperCase()}</span>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:6px">${s.ds}</div>
+          <div style="font-size:.72rem;color:var(--cyan);margin-top:4px;border-top:1px solid var(--border);padding-top:4px"><strong>Response:</strong> ${s.resp}</div>
+          <button onclick="runSim('${s.id}')" class="btn btn-ghost" style="margin-top:8px;font-size:.72rem">${ic('flask',12)} Run Simulation</button>
+        </div>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+function runSim(id){
+  const s=SCEN.find(x=>x.id===id);if(!s)return;
+  mkAlert({title:'Simulation: '+s.nm,msg:'SIMULATION MODE: '+s.ds,level:s.rk==='critical'?'critical':'warning',loc:'Station',action:s.resp});
+  toast('Simulation "'+s.nm+'" activated.','y');
+}
+
+/* ── ANALYTICS ──────────────────────────────────────────────── */
+function rAnalytics(){
+  const stnId=APP.station;
+  const stn=ST();
+  const s=stn.sensors;
+  const inv=stn.inventory;
+  const eq=stn.equipment;
+  const pers=stn.personnel;
+
+  // Inventory analytics metrics
+  const critInv=inv.filter(i=>invSt(i).lbl==='Critical').length;
+  const warnInv=inv.filter(i=>invSt(i).lbl==='Warning').length;
+  const fuelItem=inv.find(i=>i.cat==='fuel');
+  const fuelDays=fuelItem?Math.round(fuelItem.qty/fuelItem.rate):0;
+  const rsupDays=daysToResupply();
+
+  // Equipment analytics metrics
+  const avgHealth=Math.round(eq.reduce((a,b)=>a+b.health,0)/eq.length);
+  const overdueEq=eq.filter(e=>new Date(e.next)<new Date()).length;
+  const avgHours=Math.round(eq.reduce((a,b)=>a+b.hrs,0)/eq.length);
+  const onlEq=eq.filter(e=>e.status==='online').length;
+  const wrnEq=eq.filter(e=>e.status==='warning').length;
+  const crtEq=eq.filter(e=>e.status==='critical').length;
+
+  // Safety analytics metrics
+  const safeCount=pers.filter(p=>p.safe).length;
+  const insideCount=pers.filter(p=>p.loc==='inside').length;
+  const outsideCount=pers.filter(p=>p.loc==='outside').length;
+  const attnCount=pers.filter(p=>p.wellness?.checkin==='Needs Attention').length;
+  const lowSunCount=pers.filter(p=>(p.wellness?.sunHrs??99)<1).length;
+  const avgSunHrs=(pers.reduce((a,p)=>a+(p.wellness?.sunHrs??0),0)/pers.length).toFixed(1);
+
+  el('pg-analytics').innerHTML=`
+  <div class="tabs">
+    <button class="tab act" onclick="sTab(this,'an-energy')">Energy KPIs</button>
+    <button class="tab" onclick="sTab(this,'an-inv')">Inventory Analytics</button>
+    <button class="tab" onclick="sTab(this,'an-eq')">Equipment Fleet</button>
+    <button class="tab" onclick="sTab(this,'an-safety')">Safety &amp; Personnel</button>
+  </div>
+
+  <!-- Tab 1: Energy KPIs -->
+  <div id="an-energy">
+    <div class="g2">
+      <div class="card card-md"><div class="sec-hd">${ic('bolt',13)} Generation — 7d Trend</div><canvas id="cv-an-gen" class="chart-cv" height="130"></canvas></div>
+      <div class="card card-md"><div class="sec-hd">${ic('bolt',13)} Consumption — 7d Trend</div><canvas id="cv-an-con" class="chart-cv" height="130"></canvas></div>
+    </div>
+    <div class="g4" style="margin-top:12px">
+      <div class="kpi"><div class="kpi-v">${fmt(s.power_gen?.v??0)} kW</div><div class="kpi-l">Current Generation</div></div>
+      <div class="kpi"><div class="kpi-v" style="color:${(s.power_cons?.v??0)>(s.power_gen?.v??0)?'var(--red)':'var(--text)'}">${fmt(s.power_cons?.v??0)} kW</div><div class="kpi-l">Current Consumption</div></div>
+      <div class="kpi"><div class="kpi-v" style="color:var(--green)">${calcRenewableShare()}%</div><div class="kpi-l">Renewable Share</div><div class="kpi-sub">(Solar + Wind) / Total Gen</div></div>
+      <div class="kpi"><div class="kpi-v" style="color:var(--cyan)">~${Math.round(((s.solar_gen?.v??0)+(s.wind_gen?.v??0))*24*0.27)} L/d</div><div class="kpi-l">Diesel Offset</div><div class="kpi-sub">Clean energy substitution</div></div>
+    </div>
+  </div>
+
+  <!-- Tab 2: Inventory Analytics -->
+  <div id="an-inv" style="display:none">
+    <div class="g4" style="margin-bottom:12px">
+      <div class="kpi"><div class="kpi-v">${inv.length}</div><div class="kpi-l">Tracked SKU Items</div></div>
+      <div class="kpi"><div class="kpi-v" style="color:${critInv>0?'var(--red)':'var(--green)'}">${critInv}</div><div class="kpi-l">Critical Stock Items</div><div class="kpi-sub">${warnInv} at warning level</div></div>
+      <div class="kpi"><div class="kpi-v" style="color:var(--cyan)">${fuelDays}d</div><div class="kpi-l">Fuel Autonomy</div><div class="kpi-sub">${fuelItem?fuelItem.qty.toLocaleString():0} L available</div></div>
+      <div class="kpi"><div class="kpi-v" style="color:var(--cyan)">${rsupDays}d</div><div class="kpi-l">Next Resupply Vessel</div><div class="kpi-sub">${stn.resupplyShip}</div></div>
+    </div>
+    <div class="g2" style="margin-bottom:12px">
+      <div class="card card-md">
+        <div class="sec-hd">${ic('package',13)} Stock Capacity Utilization (%)</div>
+        <canvas id="cv-an-inv" class="chart-cv" height="140"></canvas>
+      </div>
+      <div class="card card-md">
+        <div class="sec-hd">${ic('ship',13)} Resupply Buffer Analysis</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${inv.slice(0,5).map(i=>{
+            const daysLeft=Math.round(i.qty/i.rate);
+            const buf=daysLeft-rsupDays;
+            const cls=buf<0?'tr':buf<30?'ty':'tg';
+            return`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:.76rem">
+              <span style="font-weight:600">${i.n}</span>
+              <span style="color:var(--muted)">Burn: ${i.rate} ${i.u}/d</span>
+              <span class="tag ${cls}">${buf<0?'EXHAUSTS BEFORE SHIP':'+'+buf+'d buffer'}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 3: Equipment Fleet Analytics -->
+  <div id="an-eq" style="display:none">
+    <div class="g4" style="margin-bottom:12px">
+      <div class="kpi"><div class="kpi-v">${eq.length}</div><div class="kpi-l">Total Assets</div></div>
+      <div class="kpi"><div class="kpi-v" style="color:${hcol(avgHealth)}">${avgHealth}%</div><div class="kpi-l">Fleet Health Index</div></div>
+      <div class="kpi"><div class="kpi-v" style="color:${overdueEq>0?'var(--red)':'var(--green)'}">${overdueEq}</div><div class="kpi-l">Services Overdue</div><div class="kpi-sub">Needs immediate WO</div></div>
+      <div class="kpi"><div class="kpi-v">${avgHours.toLocaleString()}h</div><div class="kpi-l">Mean Operating Hours</div></div>
+    </div>
+    <div class="g2" style="margin-bottom:12px">
+      <div class="card card-md">
+        <div class="sec-hd">${ic('wrench',13)} Fleet Health Distribution</div>
+        <div style="display:flex;align-items:center;gap:20px">
+          <canvas id="cv-an-eq" width="120" height="120"></canvas>
+          <div style="font-size:.78rem;display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;align-items:center;gap:5px"><span class="dot" style="background:#059669"></span>Online (&ge;80%): <strong>${onlEq}</strong></div>
+            <div style="display:flex;align-items:center;gap:5px"><span class="dot" style="background:#d97706"></span>Warning (60-79%): <strong>${wrnEq}</strong></div>
+            <div style="display:flex;align-items:center;gap:5px"><span class="dot" style="background:#dc2626"></span>Critical (&lt;60%): <strong>${crtEq}</strong></div>
+          </div>
+        </div>
+      </div>
+      <div class="card card-md">
+        <div class="sec-hd">${ic('activity',13)} Top Operating Hour Assets</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${[...eq].sort((a,b)=>b.hrs-a.hrs).slice(0,5).map(e=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);font-size:.75rem">
+            <span style="font-weight:600">${e.name}</span>
+            <span style="color:var(--muted)">${e.hrs.toLocaleString()}h</span>
+            <span class="tag ${hcls(e.health)}">${Math.round(e.health)}%</span>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 4: Safety & Personnel Analytics -->
+  <div id="an-safety" style="display:none">
+    <div class="g4" style="margin-bottom:12px">
+      <div class="kpi"><div class="kpi-v" style="color:var(--green)">${safeCount}/${pers.length}</div><div class="kpi-l">Safe &amp; Accounted</div></div>
+      <div class="kpi"><div class="kpi-v" style="color:${outsideCount>0?'var(--yellow)':'var(--cyan)'}">${outsideCount}</div><div class="kpi-l">Personnel Outside</div><div class="kpi-sub">${insideCount} inside station</div></div>
+      <div class="kpi"><div class="kpi-v" style="color:${attnCount>0?'var(--red)':'var(--green)'}">${attnCount}</div><div class="kpi-l">Wellness Alerts</div><div class="kpi-sub">${lowSunCount} low sunlight flags</div></div>
+      <div class="kpi"><div class="kpi-v" style="color:var(--cyan)">${avgSunHrs}h</div><div class="kpi-l">Station Avg Sunlight</div><div class="kpi-sub">Target &ge; 2.5h/week</div></div>
+    </div>
+    <div class="g2" style="margin-bottom:12px">
+      <div class="card card-md">
+        <div class="sec-hd">${ic('activity',13)} Crew Sunlight Exposure Hours (This Week)</div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          ${pers.map(p=>{
+            const sun=p.wellness?.sunHrs??0;
+            const cls=sun<1?'var(--red)':sun<2?'var(--yellow)':'var(--green)';
+            return`<div style="display:flex;align-items:center;gap:8px;font-size:.75rem">
+              <span style="width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600">${p.name.split(' ').pop()}</span>
+              <div class="prog" style="flex:1;height:8px"><div class="prog-fill" style="width:${Math.min(100,Math.round(sun/5*100))}%;background:${cls}"></div></div>
+              <span style="width:40px;text-align:right;font-weight:700;color:${cls}">${sun}h</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+      <div class="card card-md">
+        <div class="sec-hd">${ic('users',13)} Station Isolation Readiness &amp; Drills</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${[
+            {lbl:'Emergency Shelter Protocol',st:'VERIFIED',cls:'tg'},
+            {lbl:'Satellite SOS Beacon Test',st:'PASSED',cls:'tg'},
+            {lbl:'Medical Oxygen Resupply Test',st:'PASSED',cls:'tg'},
+            {lbl:'Polar Blizzard Containment Gate',st:'SECURED',cls:'tg'},
+            {lbl:'Psychological Check-in Rotation',st:attnCount>0?'IN PROGRESS':'COMPLETE',cls:attnCount>0?'ty':'tg'},
+          ].map(x=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:.76rem">
+            <span>${x.lbl}</span>
+            <span class="tag ${x.cls}">${x.st}</span>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  setTimeout(()=>{
+    lChart(el('cv-an-gen'),[{data:gH(stnId,'power_gen',84),color:'#059669',fill:'rgba(5,150,105,.08)'}]);
+    lChart(el('cv-an-con'),[{data:gH(stnId,'power_cons',84),color:'#dc2626',fill:'rgba(220,38,38,.05)'}]);
+    bChart(el('cv-an-inv'),inv.slice(0,6).map(i=>i.n.slice(0,6)),[{data:inv.slice(0,6).map(i=>Math.round(i.qty/i.max*100)),color:'#0277a8'}]);
+    dChart(el('cv-an-eq'),[{v:onlEq,color:'#059669'},{v:wrnEq,color:'#d97706'},{v:crtEq,color:'#dc2626'}]);
+  },50);
+}
+
+/* ── REPORTS ─────────────────────────────────────────────────── */
+function downloadEnvReport(){
+  const stn=ST();
+  const s=stn.sensors;
+  const dieselKw=s.diesel_gen?.v??20;
+  const litersDay=Math.round(dieselKw*24*0.27);
+  const liters30=litersDay*30;
+  const co2Tonnes=(liters30*2.68/1000).toFixed(2);
+  const renewPct=calcRenewableShare();
+
+  const txt=`========================================================================
+INDIAN ANTARCTIC PROGRAM — NCPOR / MINISTRY OF EARTH SCIENCES
+ENVIRONMENTAL COMPLIANCE & TREATY REPORTING SUMMARY
+Protocol on Environmental Protection to the Antarctic Treaty (Madrid Protocol)
+========================================================================
+Station:            ${stn.fullName} (${stn.name})
+Location:           ${stn.loc} [${stn.lat}, ${stn.lon}]
+Reporting Period:   Last 30 Days (Generated: ${new Date().toISOString().slice(0,10)})
+Treaty Compliance:  Annex III (Waste Management) & Annex IV (Marine Pollution)
+
+1. ENERGY & FUEL CONSUMPTION
+------------------------------------------------------------------------
+- Total Power Generation (avg):  ${fmt(s.power_gen?.v??0)} kW
+- Diesel Generator Output (avg): ${fmt(dieselKw)} kW
+- Renewable Energy Output:       ${fmt((s.solar_gen?.v??0)+(s.wind_gen?.v??0))} kW (Solar: ${fmt(s.solar_gen?.v??0)} kW, Wind: ${fmt(s.wind_gen?.v??0)} kW)
+- Current Renewable Share:       ${renewPct}% of total generation
+- Estimated Diesel Consumption:  ${litersDay.toLocaleString()} L/day (~${liters30.toLocaleString()} L per 30 days)
+- Fuel Reserve Remaining:        ${stn.inventory.find(i=>i.cat==='fuel')?.qty?.toLocaleString()||'N/A'} L
+
+2. GREENHOUSE GAS & CARBON EMISSIONS ESTIMATE
+------------------------------------------------------------------------
+- Fuel Type:                     Polar Grade Diesel (Low-Sulfur)
+- Emissions Factor:              2.68 kg CO2 equivalent per liter diesel
+- Estimated 30-Day CO2 Output:   ${co2Tonnes} Metric Tonnes CO2e
+- Estimated Annual CO2 Output:   ${(co2Tonnes*12).toFixed(1)} Metric Tonnes CO2e
+- Renewable Carbon Offset:       ~${(liters30*0.45*2.68/1000).toFixed(2)} Metric Tonnes CO2e avoided via Solar/Wind
+
+3. WASTE HANDLING & MADRID PROTOCOL STATUS (Annex III)
+------------------------------------------------------------------------
+[PASS] Hazardous Waste:          Fully segregated and stored in sealed drums for retrograde cargo shipment.
+[PASS] Solid Waste:              Compacted and packaged for annual sealift removal (Zero-landfill policy).
+[PASS] Open Burning Protocol:    100% compliant — Zero open-air incineration as per Madrid Protocol ban.
+[PASS] Grey & Black Water:       Multi-stage biological treatment before controlled discharge.
+[PASS] Fuel Containment Bunds:   Double-walled tanks with 110% containment capacity inspected weekly.
+[PASS] Chemical Manifest:        Fully updated laboratory chemical log with neutralization procedures.
+
+4. CERTIFICATION & AUDIT SIGN-OFF
+------------------------------------------------------------------------
+Auditor: Station Environmental Officer & NCPOR Polar Logistics Command
+Status:  COMPLIANT WITH ANTARCTIC TREATY ENVIRONMENTAL PROTOCOL
+========================================================================`;
+
+  const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`${stn.name}_Environmental_Compliance_Report_${new Date().toISOString().slice(0,10)}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Environmental Compliance Report downloaded.','g');
+}
+
+function genReport(){
+  const sel=el('rpt-type')?.value||'';
+  if(sel==='Environmental Compliance Report'){
+    const p=el('ec-panel');
+    if(p){ p.style.display='block'; p.scrollIntoView({behavior:'smooth'}); }
+    toast('Environmental Compliance Report generated.','g');
+  } else {
+    toast(`${sel} generated and ready for download.`,'g');
+  }
+}
+
+function rReports(){
+  const stn=ST();
+  const fuelItem=stn.inventory.find(i=>i.cat==='fuel');
+  // Environmental calculations (based on diesel consumed estimate)
+  const dailyDiesel=stn.sensors.diesel_gen?.v??20; // kW from diesel → ~0.27 L/kWh
+  const litersPerDay=Math.round(dailyDiesel*24*0.27);
+  const period30=litersPerDay*30;
+  const co2kg=Math.round(period30*2.68); // ~2.68 kg CO2 per litre diesel
+  const co2tonnes=(co2kg/1000).toFixed(2);
+  const today=new Date().toISOString().slice(0,10);
+  el('pg-reports').innerHTML=`
+  <div class="g2" style="margin-bottom:14px">
+    <div class="card card-md">
+      <div class="sec-hd">${ic('document',14)} Generate Report</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div><label style="font-size:.72rem;color:var(--muted);font-weight:600">Report Type</label>
+        <select id="rpt-type" style="width:100%;margin-top:3px" onchange="el('ec-panel').style.display=(this.value==='Environmental Compliance Report'?'block':'block')">
+          ${['Environmental Compliance Report','Daily Operations Summary','Weekly Energy Report','Monthly Equipment Health','Inventory Status Report','Environmental Data Export','Incident & Alert Summary','Personnel Safety Report','Full Station Audit'].map(t=>`<option>${t}</option>`).join('')}
+        </select></div>
+        <div><label style="font-size:.72rem;color:var(--muted);font-weight:600">Date Range</label>
+        <input type="date" style="width:100%;margin-top:3px" value="${today}"></div>
+        <button class="btn btn-p" style="justify-content:center" onclick="genReport()">${ic('document',14)} Generate Report</button>
+      </div>
+    </div>
+    <div class="card card-md">
+      <div class="sec-hd">${ic('activity',14)} Scheduled Reports</div>
+      ${[{freq:'Quarterly',t:'Environmental Compliance (Madrid Protocol)',next:'Dec 31 08:00'},{freq:'Daily',t:'Operations Summary',next:'Tomorrow 06:00'},{freq:'Weekly',t:'Energy & Power Report',next:'Mon 08:00'},{freq:'Monthly',t:'Full Station Audit',next:'Nov 1 08:00'}].map(r=>`<div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;font-size:.78rem"><div><strong>${r.freq}</strong> — ${r.t}</div><div style="color:var(--muted)">${r.next}</div></div>`).join('')}
+    </div>
+  </div>
+  <div class="card card-md" style="margin-bottom:14px;border:1px solid rgba(5,150,105,.3);background:rgba(5,150,105,.03);display:block" id="ec-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div class="sec-hd" style="color:var(--green);margin:0">${ic('activity',14)} Environmental Compliance Report — ${stn.fullName}</div>
+      <span class="tag tg">MADRID PROTOCOL COMPLIANT</span>
+    </div>
+    <div style="font-size:.75rem;color:var(--muted);margin-bottom:12px;padding:8px 10px;background:rgba(5,150,105,.06);border-radius:8px">
+      ${ic('check',12)} Generated in support of India's statutory obligations under the <strong>Protocol on Environmental Protection to the Antarctic Treaty (Madrid Protocol)</strong>, CEP Annex III (Waste Disposal) &amp; Annex IV (Marine Pollution). Reference period: last 30 days.
+    </div>
+    <div class="g3" style="margin-bottom:14px">
+      <div class="kpi" style="border-color:rgba(5,150,105,.3)">
+        <div class="kpi-v" style="color:var(--green)">${litersPerDay.toLocaleString()} L/d</div>
+        <div class="kpi-l">Est. Diesel Consumption</div>
+        <div class="kpi-sub">Based on ${fmt(dailyDiesel)} kW diesel output &times; 24h &times; 0.27 L/kWh</div>
+      </div>
+      <div class="kpi" style="border-color:rgba(194,65,12,.3)">
+        <div class="kpi-v" style="color:var(--orange)">${co2tonnes} t</div>
+        <div class="kpi-l">Est. CO₂ Emissions (30d)</div>
+        <div class="kpi-sub">${period30.toLocaleString()} L diesel &times; 2.68 kg CO₂/L</div>
+      </div>
+      <div class="kpi" style="border-color:rgba(2,119,168,.3)">
+        <div class="kpi-v" style="color:var(--cyan)">${fuelItem?Math.round(fuelItem.qty/fuelItem.max*100):0}%</div>
+        <div class="kpi-l">Fuel Reserve Status</div>
+        <div class="kpi-sub">${fuelItem?.qty?.toLocaleString()||'—'} / ${fuelItem?.max?.toLocaleString()||'—'} L</div>
+      </div>
+    </div>
+    <div class="g2" style="margin-bottom:12px">
+      <div>
+        <div class="sec-hd" style="font-size:.72rem;margin-bottom:8px">${ic('activity',13)} Energy Source Breakdown (30d estimate)</div>
+        <table class="tbl">
+          <thead><tr><th>Source</th><th>Output</th><th>Share</th><th>CO₂</th></tr></thead>
+          <tbody>
+            ${(()=>{
+              const s=stn.sensors;
+              const solar=s.solar_gen?.v??0;const wind=s.wind_gen?.v??0;const diesel=s.diesel_gen?.v??0;
+              const totGen=s.power_gen?.v||(solar+wind+diesel)||1;
+              const dieselL=Math.round(diesel*24*30*0.27);
+              const co2D=(dieselL*2.68/1000).toFixed(1);
+              return[
+                {src:'Solar Array',kw:solar,co2:'0.0 t (zero-emission)'},
+                {src:'Wind Turbines',kw:wind,co2:'0.0 t (zero-emission)'},
+                {src:'Diesel Gen',kw:diesel,co2:co2D+' t'},
+              ].map(r=>`<tr><td style="font-weight:600">${r.src}</td><td>${fmt(r.kw)} kW</td><td>${Math.round(r.kw/totGen*100)}%</td><td>${r.co2}</td></tr>`).join('');
+            })()}
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <div class="sec-hd" style="font-size:.72rem;margin-bottom:8px">${ic('check',13)} Waste &amp; Environmental Compliance Status</div>
+        ${[
+          {item:'Hazardous chemical & fuel waste segregation',status:'Compliant',cls:'tg'},
+          {item:'Biological grey & black water treatment',status:'Compliant',cls:'tg'},
+          {item:'Fuel containment double-walled bunds',status:'Compliant',cls:'tg'},
+          {item:'Complete open-burning ban observed',status:'Compliant',cls:'tg'},
+          {item:'Solid waste compaction & retrograde manifest',status:'Compliant',cls:'tg'},
+          {item:'Laboratory chemical logbook review',status:'Review due',cls:'ty'},
+        ].map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:.76rem"><span>${r.item}</span><span class="tag ${r.cls}">${r.status}</span></div>`).join('')}
+      </div>
+    </div>
+    <div style="font-size:.72rem;color:var(--muted);padding:8px 10px;background:rgba(2,119,168,.04);border-radius:8px;margin-bottom:10px">
+      <strong>Emissions reduction notes:</strong> Renewable share currently ${calcRenewableShare()}% of total generation. Each 10% increase in renewable share reduces diesel consumption by ~${Math.round(litersPerDay*0.1)} L/day (${(Math.round(litersPerDay*0.1)*30*2.68/1000).toFixed(2)} t CO₂/month). Continued investment in solar and wind capacity directly reduces treaty reporting obligations.
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-g" onclick="downloadEnvReport()">${ic('download',14)} Download Summary</button>
+      <button class="btn btn-ghost" onclick="toast('Report transmitted to HQ environmental compliance officer via satellite link.','b')">${ic('satellite',14)} Transmit to HQ</button>
+    </div>
+  </div>
+  <div class="card card-md">
+    <div class="sec-hd">${ic('document',14)} Recent Reports</div>
+    <table class="tbl">
+      <thead><tr><th>Report</th><th>Station</th><th>Generated</th><th>Size</th><th>Action</th></tr></thead>
+      <tbody>
+        ${[
+          {n:'Environmental Compliance Q3',s:stn.name,d:'Today',sz:'187 KB',isEnv:true},
+          {n:'Daily Operations - Sep 28',s:stn.name,d:'Today 06:00',sz:'284 KB',isEnv:false},
+          {n:'Energy Report - Sep 27',s:stn.name,d:'Yesterday',sz:'196 KB',isEnv:false},
+          {n:'Equipment Health Q3',s:'Both',d:'3 days ago',sz:'521 KB',isEnv:false},
+          {n:'Personnel Safety Drill',s:stn.name,d:'7 days ago',sz:'88 KB',isEnv:false}
+        ].map(r=>`<tr>
+          <td style="font-weight:600">${r.n}</td>
+          <td>${r.s}</td>
+          <td style="color:var(--muted)">${r.d}</td>
+          <td style="color:var(--muted)">${r.sz}</td>
+          <td><button class="btn btn-ghost" style="padding:3px 8px;font-size:.7rem" onclick="${r.isEnv?'downloadEnvReport()':`toast('Downloading '+this.closest('tr').querySelector('td').textContent,'b')`}">${ic('download',12)} Download</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+/* ── LOGBOOK ─────────────────────────────────────────────────── */
+function rLogbook(){
+  const logs=ST().logbook;
+  el('pg-logbook').innerHTML=`
+  <div class="g2" style="margin-bottom:14px">
+    <div class="card card-md">
+      <div class="sec-hd">${ic('plus',14)} Add Entry</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <select id="lg-cat">
+          ${['shift','maint','science','safety','inv','medical','incident'].map(c=>`<option value="${c}">${c.charAt(0).toUpperCase()+c.slice(1)}</option>`).join('')}
+        </select>
+        <textarea id="lg-txt" rows="3" placeholder="Enter logbook entry..." style="resize:vertical"></textarea>
+        <button class="btn btn-p" style="justify-content:center" onclick="addLog()">${ic('book',14)} Add Entry</button>
+      </div>
+    </div>
+    <div class="card card-md">
+      <div class="sec-hd">${ic('activity',14)} Stats</div>
+      <div class="g2">
+        ${[{lbl:'Total Entries',v:logs.length},{lbl:'Today',v:logs.filter(l=>new Date(l.ts).toDateString()===new Date().toDateString()).length},{lbl:'Maintenance',v:logs.filter(l=>l.cat==='maint').length},{lbl:'Science',v:logs.filter(l=>l.cat==='science').length}].map(x=>`<div class="kpi"><div class="kpi-v">${x.v}</div><div class="kpi-l">${x.lbl}</div></div>`).join('')}
+      </div>
+    </div>
+  </div>
+  <div style="position:relative;margin-bottom:10px">${ic('search',14)}<input id="lg-q" placeholder="Search logbook..." oninput="fLog(this.value)" style="width:100%;padding-left:24px"></div>
+  <div id="lg-list">
+    ${logs.map(l=>logCard(l)).join('')||'<div style="color:var(--muted);text-align:center;padding:20px">No entries</div>'}
+  </div>`;
+}
+function logCard(l){return`<div class="card card-sm" style="margin-bottom:8px">
+  <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+    <span class="tag tG">${l.cat}</span>
+    <span style="font-size:.68rem;color:var(--muted)">${l.user}</span>
+    <span style="font-size:.68rem;color:var(--muted);margin-left:auto">${ago(l.ts)}</span>
+  </div>
+  <div style="font-size:.8rem;color:var(--text)">${l.txt}</div>
+</div>`;}
+function fLog(q){const list=el('lg-list');if(!list)return;const filtered=ST().logbook.filter(l=>!q||l.txt.toLowerCase().includes(q.toLowerCase())||l.user.toLowerCase().includes(q.toLowerCase()));list.innerHTML=filtered.map(l=>logCard(l)).join('')||'<div style="color:var(--muted);text-align:center;padding:20px">No matches</div>';}
+function addLog(){
+  const cat=el('lg-cat')?.value||'shift';const txt=el('lg-txt')?.value?.trim()||'';
+  if(!txt){toast('Please enter log text.','y');return;}
+  const entry={id:'l'+Date.now(),ts:nowISO(),user:APP.user?.name||'Unknown',cat,txt};
+  ST().logbook.unshift(entry);
+  if(el('lg-txt'))el('lg-txt').value='';
+  rLogbook();toast('Logbook entry added.','g');
+}
+
+/* ── SETTINGS ─────────────────────────────────────────────────── */
+function toggleSetting(key){
+  if(key==='sound'){
+    SETTINGS.sound=!SETTINGS.sound;
+    APP.sound=SETTINGS.sound;
+    toast(`Sound alerts ${SETTINGS.sound?'enabled':'disabled'}.`, SETTINGS.sound?'g':'y');
+    if(SETTINGS.sound) beep(660);
+  } else if(key==='autoRefresh'){
+    SETTINGS.autoRefresh=!SETTINGS.autoRefresh;
+    if(SETTINGS.autoRefresh){
+      if(!APP.simRun) APP.simRun=setInterval(simTick,5000);
+      toast('Auto-refresh (5s interval) activated.','g');
+    } else {
+      if(APP.simRun){ clearInterval(APP.simRun); APP.simRun=null; }
+      toast('Auto-refresh paused. Sensor simulation halted.','y');
+    }
+  } else if(key==='showOfflineBanner'){
+    SETTINGS.showOfflineBanner=!SETTINGS.showOfflineBanner;
+    updConnBanner();
+    toast(`Offline banner ${SETTINGS.showOfflineBanner?'visible':'hidden'}.`, SETTINGS.showOfflineBanner?'g':'y');
+  } else if(key==='storeAndForward'){
+    SETTINGS.storeAndForward=!SETTINGS.storeAndForward;
+    toast(`Store-and-forward sync ${SETTINGS.storeAndForward?'enabled':'disabled'}.`, SETTINGS.storeAndForward?'g':'y');
+  }
+  rSettings();
+}
+
+function rSettings(){
+  const stn=ST();
+  const toggleItems=[
+    {id:'sound',lbl:'Sound Alerts',desc:'Audio chimes for critical system alerts and events',v:SETTINGS.sound},
+    {id:'autoRefresh',lbl:'Auto Refresh (5s)',desc:'Live 5-second sensor updates and telemetry simulation',v:SETTINGS.autoRefresh},
+    {id:'showOfflineBanner',lbl:'Show Offline Banner',desc:'Visible warning banner across station UI when satellite link drops',v:SETTINGS.showOfflineBanner},
+    {id:'storeAndForward',lbl:'Store-and-Forward Sync',desc:'Queue generated sensor data locally during outages and sync upon reconnection',v:SETTINGS.storeAndForward}
+  ];
+  el('pg-settings').innerHTML=`
+  <div class="g2">
+    <div class="card card-md">
+      <div class="sec-hd">${ic('cog',14)} System Settings</div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        ${toggleItems.map(s=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="flex:1;padding-right:12px;cursor:pointer" onclick="toggleSetting('${s.id}')">
+            <div style="font-size:.82rem;font-weight:700;color:var(--text)">${s.lbl}</div>
+            <div style="font-size:.7rem;color:var(--muted);margin-top:2px">${s.desc}</div>
+          </div>
+          <button type="button" aria-label="${s.lbl}" onclick="toggleSetting('${s.id}')" style="width:44px;height:24px;border-radius:12px;border:none;cursor:pointer;background:${s.v?'var(--cyan)':'rgba(144,204,232,.55)'};transition:background .2s;position:relative;flex-shrink:0;padding:0;outline:none;display:inline-block">
+            <span style="position:absolute;top:3px;${s.v?'right:3px':'left:3px'};width:18px;height:18px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:all .2s ease"></span>
+          </button>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="card card-md">
+      <div class="sec-hd">${ic('users',14)} User Profile</div>
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
+        <div style="width:44px;height:44px;background:${roleC(APP.user?.role)};border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:1.1rem">${(APP.user?.name||'U')[0]}</div>
+        <div><div style="font-weight:700">${APP.user?.name}</div><div style="font-size:.72rem;color:var(--muted)">${(ROLES[APP.user?.role]||{}).label}</div><div style="font-size:.68rem;color:var(--dim)">${APP.user?.email}</div></div>
+      </div>
+      <div style="font-size:.75rem;color:var(--muted);padding:8px;background:rgba(2,119,168,.05);border-radius:8px">
+        <strong>Access level:</strong> ${APP.user?.role==='admin'?'Full access':'Restricted to '+JSON.stringify(PERMISSIONS[APP.user?.role]||[]).replace(/["\[\]]/g,'').replace(/,/g,', ')}
+      </div>
+    </div>
+  </div>
+  <div class="card card-md" style="margin-top:12px">
+    <div class="sec-hd">${ic('activity',14)} System Information</div>
+    <div class="g3">
+      ${[{k:'Platform',v:'Antarctic Station Command v3.0'},{k:'Station',v:stn.fullName},{k:'Location',v:stn.loc},{k:'Coordinates',v:`${stn.lat}, ${stn.lon}`},{k:'Established',v:stn.est},{k:'Active Crew',v:stn.crew},{k:'Connectivity',v:CONN.status.toUpperCase()},{k:'Last HQ Sync',v:ago(CONN.lastSync.toISOString())},{k:'Simulation',v:SETTINGS.autoRefresh?'Active — 5s interval':'Paused (manual)'},{k:'Data Points',v:'288h history per sensor'},{k:'Equipment Tracked',v:stn.equipment.length},{k:'Resupply Date',v:stn.resupplyDate}].map(x=>`<div class="card-sm"><div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;font-weight:700;margin-bottom:2px">${x.k}</div><div style="font-size:.78rem;color:var(--text);font-weight:600">${x.v}</div></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+/* ── TAB SWITCHER ────────────────────────────────────────────── */
+function sTab(btn,tgt){
+  const tabs=btn.closest('.tabs');if(!tabs)return;
+  tabs.querySelectorAll('.tab').forEach(t=>t.classList.remove('act'));btn.classList.add('act');
+  const parent=tabs.nextElementSibling?.parentElement||tabs.parentElement;
+  const prefix=tgt.split('-')[0]+'-';
+  (parent||document).querySelectorAll('[id^="'+prefix+'"]').forEach(d=>d.style.display='none');
+  const te=el(tgt);if(te)te.style.display='';
+}
+
+/* ── BOOT ────────────────────────────────────────────────────── */
+function boot(){
+  initStationSensors('maitri');
+  initStationSensors('bharati');
+  APP.simRun=setInterval(simTick,5000);
+  initConn();
+  APP.user=null;APP.token=null;
+  try{localStorage.removeItem('adt_u');localStorage.removeItem('adt_t');}catch(e){}
+  go('login');
+  setTimeout(updBadge,300);
+}
+
+boot();
+</script>
+</body>
+</html>

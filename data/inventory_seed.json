@@ -1,0 +1,62 @@
+[
+  {
+    "id": "INV-001",
+    "station": "maitri",
+    "item": "Arctic Aviation Fuel (JP-8)",
+    "category": "Fuel & Power",
+    "quantity": 18200,
+    "max": 25000,
+    "unit": "Litres",
+    "burn_rate": "120 L/day",
+    "days_remaining": 151,
+    "status": "HEALTHY"
+  },
+  {
+    "id": "INV-002",
+    "station": "maitri",
+    "item": "Potable Water Buffer",
+    "category": "Life Support",
+    "quantity": 4200,
+    "max": 6000,
+    "unit": "Litres",
+    "burn_rate": "450 L/day",
+    "days_remaining": 9,
+    "status": "WARNING"
+  },
+  {
+    "id": "INV-003",
+    "station": "maitri",
+    "item": "Dry Rations & MRE Reserves",
+    "category": "Provisions",
+    "quantity": 850,
+    "max": 1000,
+    "unit": "Packs",
+    "burn_rate": "14 packs/day",
+    "days_remaining": 60,
+    "status": "HEALTHY"
+  },
+  {
+    "id": "INV-004",
+    "station": "bharati",
+    "item": "Specialized Polar Lubricants",
+    "category": "Maintenance",
+    "quantity": 38,
+    "max": 50,
+    "unit": "Drums",
+    "burn_rate": "0.1 drum/day",
+    "days_remaining": 380,
+    "status": "HEALTHY"
+  },
+  {
+    "id": "INV-005",
+    "station": "bharati",
+    "item": "Emergency Oxygen Cylinders",
+    "category": "Medical & Safety",
+    "quantity": 28,
+    "max": 30,
+    "unit": "Tanks",
+    "burn_rate": "Emergency use only",
+    "days_remaining": 999,
+    "status": "HEALTHY"
+  }
+]

@@ -1,0 +1,50 @@
+[
+  {
+    "id": "EQ-01",
+    "station": "maitri",
+    "name": "Main Generator #1 (Caterpillar 125kVA)",
+    "category": "Power Generation",
+    "health": 94,
+    "hours_run": 8420,
+    "last_service": "2026-08-15",
+    "next_service": "2026-11-15",
+    "criticality": "HIGH",
+    "status": "OPERATIONAL"
+  },
+  {
+    "id": "EQ-02",
+    "station": "maitri",
+    "name": "Wind Turbine Alpha (30kW Cold-Climate)",
+    "category": "Renewables",
+    "health": 88,
+    "hours_run": 14200,
+    "last_service": "2026-07-10",
+    "next_service": "2026-10-10",
+    "criticality": "MEDIUM",
+    "status": "OPERATIONAL"
+  },
+  {
+    "id": "EQ-03",
+    "station": "bharati",
+    "name": "Reverse Osmosis Snow Melter Unit",
+    "category": "Life Support",
+    "health": 78,
+    "hours_run": 6120,
+    "last_service": "2026-06-20",
+    "next_service": "2026-09-20",
+    "criticality": "HIGH",
+    "status": "SERVICE DUE"
+  },
+  {
+    "id": "EQ-04",
+    "station": "bharati",
+    "name": "Primary C-Band Satellite Terminal",
+    "category": "Communications",
+    "health": 98,
+    "hours_run": 24500,
+    "last_service": "2026-09-01",
+    "next_service": "2026-12-01",
+    "criticality": "HIGH",
+    "status": "OPERATIONAL"
+  }
+]

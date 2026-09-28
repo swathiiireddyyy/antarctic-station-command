@@ -1,0 +1,42 @@
+[
+  {
+    "id": "u-admin-01",
+    "name": "Dr. Ramesh Nair",
+    "email": "admin@ncpor.res.in",
+    "role": "Station Commander / Admin",
+    "role_code": "admin",
+    "permissions": ["all", "override", "configure", "reports", "personnel", "emergency"]
+  },
+  {
+    "id": "u-ops-01",
+    "name": "Vikram Singh",
+    "email": "operator@maitri.in",
+    "role": "Operations & Systems Engineer",
+    "role_code": "operations",
+    "permissions": ["telemetry", "energy", "equipment", "inventory", "diagnostics"]
+  },
+  {
+    "id": "u-sci-01",
+    "name": "Dr. Ananya Sharma",
+    "email": "scientist@bharati.in",
+    "role": "Lead Research Scientist",
+    "role_code": "science",
+    "permissions": ["sensors", "environment", "analytics", "experiments", "logbook"]
+  },
+  {
+    "id": "u-med-01",
+    "name": "Dr. Sanjay Kulkarni",
+    "email": "doctor@antarctica.gov.in",
+    "role": "Chief Medical Officer",
+    "role_code": "medical",
+    "permissions": ["personnel_health", "wellness", "medical_bay", "emergency"]
+  },
+  {
+    "id": "u-gst-01",
+    "name": "Guest Observer",
+    "email": "guest@iari.in",
+    "role": "Mission Observer (Read-Only)",
+    "role_code": "viewer",
+    "permissions": ["read_only"]
+  }
+]

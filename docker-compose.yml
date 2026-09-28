@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: iari_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: iari_monitor
+      POSTGRES_USER: iari_admin
+      POSTGRES_PASSWORD: iari_secret_2024
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iari_admin -d iari_monitor"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis (session store + pub/sub for real-time alerts)
+  redis:
+    image: redis:7-alpine
+    container_name: iari_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin (database management UI)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: iari_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@iari.gov.in
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: iari_network

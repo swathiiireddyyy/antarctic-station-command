@@ -1,0 +1,44 @@
+[
+  {
+    "id": "maitri",
+    "name": "Maitri Station",
+    "code": "IND-01",
+    "type": "Permanent Research Station",
+    "location": "Schirmacher Oasis, Queen Maud Land, Antarctica",
+    "latitude": -70.7667,
+    "longitude": 11.7333,
+    "altitude_m": 117,
+    "established": 1989,
+    "capacity_summer": 65,
+    "capacity_winter": 25,
+    "current_crew": 22,
+    "status": "OPERATIONAL",
+    "power_grid": {
+      "solar_capacity_kw": 40,
+      "wind_capacity_kw": 30,
+      "diesel_capacity_kw": 120,
+      "battery_capacity_kwh": 200
+    }
+  },
+  {
+    "id": "bharati",
+    "name": "Bharati Station",
+    "code": "IND-02",
+    "type": "Modern Low-Emission Station",
+    "location": "Larsemann Hills, East Antarctica",
+    "latitude": -69.4069,
+    "longitude": 76.1919,
+    "altitude_m": 35,
+    "established": 2012,
+    "capacity_summer": 72,
+    "capacity_winter": 47,
+    "current_crew": 38,
+    "status": "OPERATIONAL",
+    "power_grid": {
+      "solar_capacity_kw": 80,
+      "wind_capacity_kw": 60,
+      "diesel_capacity_kw": 180,
+      "battery_capacity_kwh": 350
+    }
+  }
+]
