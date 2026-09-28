@@ -1,5 +1,7 @@
 #  Antarctic Station Command Platform
 
+BUILT FOR THE SMART INDIA HACKATHON 2026
+
 > Consolidated Operations & Monitoring Command Base for India's Antarctic Research Stations: **Maitri** (Queen Maud Land) & **Bharati** (Larsemann Hills).
 
 [![Live Demo](https://img.shields.io/badge/Render-Live%20Demo-00c7b7?style=for-the-badge&logo=render&logoColor=white)](https://antarctic-station-command.onrender.com)
