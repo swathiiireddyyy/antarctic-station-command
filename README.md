@@ -1,22 +1,22 @@
-# ❄️ Antarctic Station Command Platform
+#  Antarctic Station Command Platform
 
 > Consolidated Operations & Monitoring Command Base for India's Antarctic Research Stations: **Maitri** (Queen Maud Land) & **Bharati** (Larsemann Hills).
 
 [![Live Demo](https://img.shields.io/badge/Render-Live%20Demo-00c7b7?style=for-the-badge&logo=render&logoColor=white)](https://antarctic-station-command.onrender.com)
 [![Status](https://img.shields.io/badge/System-Operational-success?style=for-the-badge)](https://antarctic-station-command.onrender.com)
 
-🔗 **Live Deployment**: **[https://antarctic-station-command.onrender.com](https://antarctic-station-command.onrender.com)**
+ **Live Deployment**: **[https://antarctic-station-command.onrender.com](https://antarctic-station-command.onrender.com)**
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
-### 🌐 Access Live Cloud Deployment
+###  Access Live Cloud Deployment
 - **Live Platform**: [https://antarctic-station-command.onrender.com](https://antarctic-station-command.onrender.com)
 - **Live API Status**: [https://antarctic-station-command.onrender.com/api/stations](https://antarctic-station-command.onrender.com/api/stations)
 - **Live Health Check**: [https://antarctic-station-command.onrender.com/health](https://antarctic-station-command.onrender.com/health)
 
-### 💻 Running Locally
+###  Running Locally
 
 #### 1. Prerequisites
 - **Node.js**: v18.0.0 or higher
@@ -39,7 +39,7 @@ The entire unified platform will be accessible locally at:
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 antarctic-station-command/
@@ -92,7 +92,7 @@ Login or switch seamlessly between any of the 5 mission roles:
 
 ---
 
-## 🧭 16 Core Modules
+##  16 Core Modules
 
 1. **Dashboard**: High-level station status, temperature, renewable mix, active alerts.
 2. **HQ Overview**: Cross-station strategic map (Maitri & Bharati), weather comparisons.
@@ -113,5 +113,5 @@ Login or switch seamlessly between any of the 5 mission roles:
 
 ---
 
-## 🛡️ License
+##  License
 MIT License. Developed for Antarctic Research & Extreme Environment Expedition Management.
