@@ -42,3 +42,4 @@ flowchart TD
 2. **Integrated Port Architecture**: Both the interactive frontend and backend API endpoints run together on **Port 4000**.
 3. **Store-and-Forward Telemetry**: Supports intermittent satellite communication with an offline queue that replays telemetry upon link reconnection.
 4. **Role-Based Access Control (RBAC)**: Supports 5 specialized mission roles (Station Commander, Operations Engineer, Lead Scientist, Medical Officer, and Observer).
+5. **Cloud Deployment Ready**: Deployed and accessible on Render at [https://antarctic-station-command.onrender.com](https://antarctic-station-command.onrender.com).

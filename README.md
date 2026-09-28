@@ -2,28 +2,40 @@
 
 > Consolidated Operations & Monitoring Command Base for India's Antarctic Research Stations: **Maitri** (Queen Maud Land) & **Bharati** (Larsemann Hills).
 
+[![Live Demo](https://img.shields.io/badge/Render-Live%20Demo-00c7b7?style=for-the-badge&logo=render&logoColor=white)](https://antarctic-station-command.onrender.com)
+[![Status](https://img.shields.io/badge/System-Operational-success?style=for-the-badge)](https://antarctic-station-command.onrender.com)
+
+🔗 **Live Deployment**: **[https://antarctic-station-command.onrender.com](https://antarctic-station-command.onrender.com)**
+
 ---
 
 ## 🚀 Quick Start
 
-### 1. Prerequisites
+### 🌐 Access Live Cloud Deployment
+- **Live Platform**: [https://antarctic-station-command.onrender.com](https://antarctic-station-command.onrender.com)
+- **Live API Status**: [https://antarctic-station-command.onrender.com/api/stations](https://antarctic-station-command.onrender.com/api/stations)
+- **Live Health Check**: [https://antarctic-station-command.onrender.com/health](https://antarctic-station-command.onrender.com/health)
+
+### 💻 Running Locally
+
+#### 1. Prerequisites
 - **Node.js**: v18.0.0 or higher
 - **npm**: v9.0.0 or higher
 
-### 2. Installation
+#### 2. Installation
 From the root directory (`antarctic-station-command`):
 ```bash
 npm install
 ```
 
-### 3. Launch the Platform
+#### 3. Launch the Platform
 ```bash
 npm start
 ```
-The entire unified platform will be accessible at:
-- **Web App**: [http://localhost:4000](http://localhost:4000)
-- **API Status**: [http://localhost:4000/api/stations](http://localhost:4000/api/stations)
-- **Health Check**: [http://localhost:4000/health](http://localhost:4000/health)
+The entire unified platform will be accessible locally at:
+- **Local Web App**: [http://localhost:4000](http://localhost:4000)
+- **Local API Status**: [http://localhost:4000/api/stations](http://localhost:4000/api/stations)
+- **Local Health Check**: [http://localhost:4000/health](http://localhost:4000/health)
 
 ---
 
