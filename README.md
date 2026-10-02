@@ -80,7 +80,7 @@ antarctic-station-command/
 
 ---
 
-## 👥 Demo Personas & Roles
+##  Demo Personas & Roles
 
 Login or switch seamlessly between any of the 5 mission roles:
 
